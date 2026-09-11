@@ -314,7 +314,7 @@ async function parseShopeeCSV(file){
   if(!isLive && !isVideo) return null;
 
   const periodeStr = row['Periode Data'] || '';
-  const periodStart = parseDateID(periodeStr.split('-')[0] || periodeStr);
+  const periodStart = parseDateID(periodeStr);
   const userId = (row['User Id']||'').trim();
 
   const gmv = parseRp(row['Penjualan(Pesanan Siap Dikirim)']);
