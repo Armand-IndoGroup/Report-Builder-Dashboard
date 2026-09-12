@@ -123,23 +123,27 @@ h1{
 .table-scroll{overflow-x:auto;}
 table{width:100%; border-collapse:collapse; font-size:12.5px;}
 thead th{
-  text-align:left; font-family:var(--body); font-size:10.5px; text-transform:uppercase; letter-spacing:0.04em;
-  font-weight:700; color:var(--muted); padding:9px 10px; border-bottom:1px solid var(--border); white-space:nowrap;
-  background:#F8FAFC;
+  text-align:left; font-family:var(--body); font-size:10.5px; text-transform:uppercase; letter-spacing:0.05em;
+  font-weight:700; color:#E2E8F0; padding:10px 10px; border-bottom:2px solid var(--primary-deep); white-space:nowrap;
+  background:var(--ink);
 }
 thead tr.groups th{
-  font-size:9.5px; color:var(--primary-deep); border-bottom:none; padding:10px 10px 2px;
-  background:#F8FAFC;
+  font-size:9.5px; color:#93C5FD; border-bottom:none; padding:10px 10px 2px;
+  background:var(--ink);
 }
 tbody td{
-  padding:9px 10px; border-bottom:1px solid #F1F5F9; white-space:nowrap;
+  padding:9px 10px; border-bottom:1px solid var(--border); white-space:nowrap;
   font-variant-numeric:tabular-nums; color:var(--ink);
 }
 tbody td.shop{font-weight:600; display:flex; align-items:center; gap:7px;}
-tbody tr:hover td{background:#F8FAFC;}
-tr.total td{font-weight:700; background:#F8FAFC;}
-.up{color:var(--success); font-weight:600;}
-.down{color:var(--danger); font-weight:600;}
+tbody tr:nth-child(even) td{background:#F5F8FC;}
+tbody tr:hover td{background:var(--primary-soft);}
+tr.total td{font-weight:700; background:#DBEAFE !important; border-top:2px solid var(--primary-deep); color:var(--primary-deep);}
+.up, .down{
+  display:inline-block; font-weight:700; font-size:11.5px; padding:2px 7px; border-radius:20px;
+}
+.up{color:#15803D; background:#DCFCE7;}
+.down{color:#B91C1C; background:#FEE2E2;}
 .na{color:var(--muted-2);}
 .empty-state{
   text-align:center; padding:44px 20px; color:var(--muted); font-size:13.5px;
@@ -218,7 +222,11 @@ tr.total td{font-weight:700; background:#F8FAFC;}
   <div class="card" id="tableCard">
     <div class="toolbar" style="margin-top:0; margin-bottom:6px;">
       <span class="note" id="tableNote"></span>
-      <button class="btn primary" id="copyBtn">Salin sebagai Markdown</button>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <button class="btn" id="downloadCsvBtn">⬇ CSV</button>
+        <button class="btn" id="downloadXlsxBtn">⬇ Excel</button>
+        <button class="btn primary" id="copyBtn">Salin sebagai Markdown</button>
+      </div>
     </div>
     <div id="tableWrap"></div>
     <div class="legend">
@@ -904,6 +912,90 @@ function tableToMarkdown(){
   return lines.join('\n');
 }
 
+function buildTableAOA(){
+  const key = activeTab;
+  const rows = buildChannelRows(key);
+  const extraLabel = EXTRA_LABEL[key];
+  const hasAnyPenonton = rows.some(r=> r.penontonIni!==null && r.penontonIni!==undefined);
+
+  let header = ['Platform','Toko','GMV Ini (Rp)','GMV Lalu (Rp)','Growth GMV (%)','Produk Ini','Produk Lalu','Growth Produk (%)','CVR Ini (%)','CVR Lalu (%)','Growth CVR (%)','Impresi Ini','Impresi Lalu','Growth Impresi (%)','Klik Ini','Klik Lalu','Growth Klik (%)','CTR Ini (%)','CTR Lalu (%)','Growth CTR (%)'];
+  if(extraLabel){ header.push(`${extraLabel} Ini`, `${extraLabel} Lalu`, `Growth ${extraLabel} (%)`); }
+  if(hasAnyPenonton){ header.push('Penonton Ini','Penonton Lalu','Growth Penonton (%)','Durasi Tonton Ini','Durasi Tonton Lalu'); }
+
+  const num = (v)=> (v===null||v===undefined||!isFinite(v)) ? '' : Math.round(v*100)/100;
+  const g = (a,b)=>{ const x = growth(a,b); return (x===null||!isFinite(x)) ? '' : Math.round(x*100)/100; };
+
+  const aoa = [header];
+  let totalGmvIni=0, totalGmvLalu=0, totalProdukIni=0, totalProdukLalu=0;
+  let totalPesananIni=0, totalKlikIni=0, totalPesananLalu=0, totalKlikLalu=0;
+  let totalImpresiIni=0, totalImpresiLalu=0;
+  let totalPenontonIni=0, totalPenontonLalu=0, hasPenontonLalu=true;
+  let totalExtraIni=0, totalExtraLalu=0, hasExtra=false;
+
+  rows.forEach(r=>{
+    let row = [r.platform, r.shop, num(r.gmvIni), num(r.gmvLalu), g(r.gmvIni,r.gmvLalu), num(r.produkIni), num(r.produkLalu), g(r.produkIni,r.produkLalu), num(r.cvrIni), num(r.cvrLalu), g(r.cvrIni,r.cvrLalu), num(r.impresiIni), num(r.impresiLalu), g(r.impresiIni,r.impresiLalu), num(r.klikIni2), num(r.klikLalu2), g(r.klikIni2,r.klikLalu2), num(r.ctrIni), num(r.ctrLalu), g(r.ctrIni,r.ctrLalu)];
+    if(extraLabel){ row.push(num(r.extraIni), num(r.extraLalu), g(r.extraIni,r.extraLalu)); }
+    if(hasAnyPenonton){
+      const noPenonton = r.penontonIni===null || r.penontonIni===undefined;
+      row.push(noPenonton?'':num(r.penontonIni), noPenonton?'':num(r.penontonLalu), noPenonton?'':g(r.penontonIni,r.penontonLalu), r.durasiTontonIni||'', r.durasiTontonLalu||'');
+    }
+    aoa.push(row);
+
+    totalGmvIni += r.gmvIni||0; totalGmvLalu += r.gmvLalu||0;
+    totalProdukIni += r.produkIni||0; totalProdukLalu += r.produkLalu||0;
+    totalPesananIni += r.pesananIni||0; totalKlikIni += r.klikIni||0;
+    totalPesananLalu += r.pesananLalu||0; totalKlikLalu += r.klikLalu||0;
+    totalImpresiIni += r.impresiIni||0; totalImpresiLalu += r.impresiLalu||0;
+    if(r.penontonIni!==null && r.penontonIni!==undefined){
+      totalPenontonIni += r.penontonIni||0;
+      if(r.penontonLalu!==null && r.penontonLalu!==undefined) totalPenontonLalu += r.penontonLalu||0;
+      else hasPenontonLalu=false;
+    }
+    if(extraLabel && r.extraIni!==null){ totalExtraIni += r.extraIni||0; totalExtraLalu += r.extraLalu||0; hasExtra=true; }
+  });
+
+  const totalCvrIni = totalKlikIni ? totalPesananIni/totalKlikIni*100 : 0;
+  const totalCvrLalu = totalKlikLalu ? totalPesananLalu/totalKlikLalu*100 : 0;
+  const totalCtrIni = totalImpresiIni ? totalKlikIni/totalImpresiIni*100 : 0;
+  const totalCtrLalu = totalImpresiLalu ? totalKlikLalu/totalImpresiLalu*100 : 0;
+
+  let totalRow = ['Total','', num(totalGmvIni), num(totalGmvLalu), g(totalGmvIni,totalGmvLalu), num(totalProdukIni), num(totalProdukLalu), g(totalProdukIni,totalProdukLalu), num(totalCvrIni), num(totalCvrLalu), g(totalCvrIni,totalCvrLalu), num(totalImpresiIni), num(totalImpresiLalu), g(totalImpresiIni,totalImpresiLalu), num(totalKlikIni), num(totalKlikLalu), g(totalKlikIni,totalKlikLalu), num(totalCtrIni), num(totalCtrLalu), g(totalCtrIni,totalCtrLalu)];
+  if(extraLabel){ totalRow.push(hasExtra?num(totalExtraIni):'', hasExtra?num(totalExtraLalu):'', hasExtra?g(totalExtraIni,totalExtraLalu):''); }
+  if(hasAnyPenonton){
+    totalRow.push(totalPenontonIni?num(totalPenontonIni):'', (hasPenontonLalu&&totalPenontonLalu)?num(totalPenontonLalu):'', hasPenontonLalu?g(totalPenontonIni,totalPenontonLalu):'', '', '');
+  }
+  aoa.push(totalRow);
+
+  return aoa;
+}
+
+function downloadCSV(){
+  const aoa = buildTableAOA();
+  if(aoa.length<=1){ alert('Belum ada data untuk didownload.'); return; }
+  const esc = (v)=>{
+    const s = String(v===undefined||v===null?'':v);
+    return /[",\n]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s;
+  };
+  const csv = aoa.map(row=> row.map(esc).join(',')).join('\r\n');
+  const blob = new Blob(['\ufeff'+csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `report-${activeTab}-${new Date().toISOString().slice(0,10)}.csv`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function downloadXLSX(){
+  const aoa = buildTableAOA();
+  if(aoa.length<=1){ alert('Belum ada data untuk didownload.'); return; }
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  const wb = XLSX.utils.book_new();
+  const sheetName = activeTab==='video' ? 'Video' : 'Live';
+  XLSX.utils.book_append_sheet(wb, ws, sheetName);
+  XLSX.writeFile(wb, `report-${activeTab}-${new Date().toISOString().slice(0,10)}.xlsx`);
+}
+
 // ============================================================
 // EVENTS
 // ============================================================
@@ -938,6 +1030,9 @@ document.querySelectorAll('.tab').forEach(tab=>{
     renderTable();
   });
 });
+
+document.getElementById('downloadCsvBtn').addEventListener('click', downloadCSV);
+document.getElementById('downloadXlsxBtn').addEventListener('click', downloadXLSX);
 
 document.getElementById('copyBtn').addEventListener('click', async ()=>{
   const md = tableToMarkdown();
