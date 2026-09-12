@@ -166,15 +166,21 @@ tr.total td{font-weight:700; background:#DBEAFE !important; border-top:2px solid
 .chart-legend .group{display:flex; align-items:center; gap:14px;}
 .chart-legend .sep{width:1px; height:14px; background:var(--border);}
 .swatch{display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:5px; vertical-align:middle;}
-.swatch.ini{background:var(--primary);}
-.swatch.lalu{background:#CBD5E1;}
+.swatch.ini{background:#2563EB;}
+.swatch.lalu{background:#94A3B8;}
 .swatch.dot{border-radius:50%;}
-.swatch.shopee{background:var(--shopee);}
-.swatch.tiktok{background:var(--tiktok);}
+.swatch.shopee{background:#EE4D2D; box-shadow:0 0 0 1.5px #fff, 0 0 0 2.5px #EE4D2D;}
+.swatch.tiktok{background:#0F172A; box-shadow:0 0 0 1.5px #fff, 0 0 0 2.5px #0F172A;}
 .chart-block{margin-bottom:26px;}
 .chart-block:last-child{margin-bottom:0;}
+.chart-block-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;}
+.chart-dl-btn{
+  font-family:var(--body); font-size:11px; font-weight:600; color:var(--muted); background:none;
+  border:1px solid var(--border); border-radius:6px; padding:4px 9px; cursor:pointer;
+}
+.chart-dl-btn:hover{color:var(--primary); border-color:var(--primary);}
 .chart-title{
-  font-family:var(--display); font-size:14px; font-weight:700; color:var(--ink); margin:0 0 12px;
+  font-family:var(--display); font-size:14px; font-weight:700; color:var(--ink); margin:0;
   text-transform:uppercase; letter-spacing:0.03em;
 }
 .chart-scroll svg text{ font-family:var(--body); }
@@ -239,6 +245,7 @@ tr.total td{font-weight:700; background:#DBEAFE !important; border-top:2px solid
   <div class="card" id="chartsCard">
     <div class="toolbar" style="margin-top:0; margin-bottom:6px;">
       <span class="note">Grafik performa <b>Live</b> per toko — Ini vs Lalu, diurutkan dari GMV tertinggi</span>
+      <button class="btn primary" id="downloadAllChartsBtn">⬇ Download Semua Grafik</button>
     </div>
     <div id="chartsWrap"></div>
   </div>
@@ -608,20 +615,45 @@ function formatCtrChart(n){
   return n.toFixed(1).replace('.',',')+'%';
 }
 
-function buildHorizontalBarChartSVG(rows, fmt){
-  const barH = 13, pairGap = 3, groupGap = 17;
+// Literal colors used in charts (not CSS var()) so exported PNGs render correctly
+// standalone, independent of the host page's stylesheet.
+const CHART_COLORS = {
+  ini: '#2563EB', lalu: '#94A3B8', ink: '#0F172A', muted: '#475569',
+  border: '#E2E8F0', zebra: '#F5F8FC', grid: '#E2E8F0',
+  shopee: '#EE4D2D', tiktok: '#0F172A',
+};
+
+function buildHorizontalBarChartSVG(rows, fmt, title){
+  const barH = 14, pairGap = 3, groupGap = 18;
   const rowBlock = barH*2 + pairGap + groupGap;
-  const labelW = 152, valueGap = 8, padTop = 8, padBottom = 8, padLeft = 10, padRight = 56;
+  const labelW = 152, valueGap = 8, padTop = 14, padBottom = 10, padLeft = 10, padRight = 58;
   const totalW = 620;
   const barAreaW = totalW - labelW - padRight - padLeft;
   const height = padTop + rows.length*rowBlock - groupGap + padBottom;
+  const C = CHART_COLORS;
 
   const vals = [];
   rows.forEach(r=>{ if(r.ini!=null) vals.push(r.ini); if(r.lalu!=null) vals.push(r.lalu); });
   const maxVal = Math.max(1, ...vals);
+  const axisX = padLeft + labelW;
+
+  // background zebra bands (one per toko row) — reduces "flat/plain" feel, eases eye tracking
+  let zebra = '';
+  rows.forEach((r,i)=>{
+    if(i%2===1){
+      const by = padTop + i*rowBlock - (groupGap/2);
+      zebra += `<rect x="0" y="${by}" width="${totalW}" height="${rowBlock}" fill="${C.zebra}"/>`;
+    }
+  });
+
+  // vertical gridlines at 25/50/75/100% of max value — adds structure without clutter
+  let grid = '';
+  [0.25,0.5,0.75,1].forEach(frac=>{
+    const gx = axisX + frac*barAreaW;
+    grid += `<line x1="${gx}" y1="${padTop-6}" x2="${gx}" y2="${height-padBottom+2}" stroke="${C.grid}" stroke-width="1" stroke-dasharray="2,3"/>`;
+  });
 
   let bars = '';
-  const axisX = padLeft + labelW;
   rows.forEach((r,i)=>{
     const gy = padTop + i*rowBlock;
     const hasIni = r.ini!=null;
@@ -630,25 +662,28 @@ function buildHorizontalBarChartSVG(rows, fmt){
     const wLalu = hasLalu ? (r.lalu/maxVal*barAreaW) : 0;
     const yIni = gy, yLalu = gy + barH + pairGap;
     const midY = gy + barH + pairGap/2;
+    const pillR = barH/2;
 
-    // platform badge (small colored dot, not a logo) + shop label
-    const badgeColor = r.platform==='Shopee' ? 'var(--shopee)' : 'var(--tiktok)';
-    bars += `<circle cx="${padLeft+5}" cy="${midY}" r="4" fill="${badgeColor}"/>`;
-    bars += `<text x="${padLeft+14}" y="${midY+3.5}" font-size="11" font-weight="600" fill="var(--ink)">${escapeHtml(r.shop)}</text>`;
+    const badgeColor = r.platform==='Shopee' ? C.shopee : C.tiktok;
+    bars += `<circle cx="${padLeft+6}" cy="${midY}" r="5" fill="${badgeColor}" stroke="#fff" stroke-width="1.4"/>`;
+    bars += `<text x="${padLeft+16}" y="${midY+3.5}" font-size="11" font-weight="600" fill="${C.ink}">${escapeHtml(r.shop)}</text>`;
 
     if(hasIni){
-      bars += `<rect x="${axisX}" y="${yIni}" width="${Math.max(wIni,1.5)}" height="${barH}" fill="var(--primary)" rx="2"/>`;
-      bars += `<text x="${axisX+wIni+valueGap}" y="${yIni+barH-3}" font-size="9.5" fill="var(--ink)">${escapeHtml(fmt(r.ini))}</text>`;
+      bars += `<rect x="${axisX}" y="${yIni}" width="${Math.max(wIni,pillR*2)}" height="${barH}" fill="${C.ini}" rx="${pillR}"/>`;
+      bars += `<text x="${axisX+wIni+valueGap}" y="${yIni+barH-3}" font-size="9.5" font-weight="600" fill="${C.ink}">${escapeHtml(fmt(r.ini))}</text>`;
     }
     if(hasLalu){
-      bars += `<rect x="${axisX}" y="${yLalu}" width="${Math.max(wLalu,1.5)}" height="${barH}" fill="#CBD5E1" rx="2"/>`;
-      bars += `<text x="${axisX+wLalu+valueGap}" y="${yLalu+barH-3}" font-size="9.5" fill="var(--muted)">${escapeHtml(fmt(r.lalu))}</text>`;
+      bars += `<rect x="${axisX}" y="${yLalu}" width="${Math.max(wLalu,pillR*2)}" height="${barH}" fill="${C.lalu}" rx="${pillR}"/>`;
+      bars += `<text x="${axisX+wLalu+valueGap}" y="${yLalu+barH-3}" font-size="9.5" fill="${C.muted}">${escapeHtml(fmt(r.lalu))}</text>`;
     }
   });
 
-  bars += `<line x1="${axisX}" y1="${padTop-2}" x2="${axisX}" y2="${height-padBottom+2}" stroke="var(--border)" stroke-width="1"/>`;
+  bars += `<line x1="${axisX}" y1="${padTop-6}" x2="${axisX}" y2="${height-padBottom+2}" stroke="${C.border}" stroke-width="1.4"/>`;
 
-  return `<svg viewBox="0 0 ${totalW} ${height}" width="100%" height="${height}" style="display:block; max-width:${totalW}px;">${bars}</svg>`;
+  return `<svg viewBox="0 0 ${totalW} ${height}" width="100%" height="${height}" style="display:block; max-width:${totalW}px; background:#fff;">
+    <rect x="0" y="0" width="${totalW}" height="${height}" fill="#fff"/>
+    ${zebra}${grid}${bars}
+  </svg>`;
 }
 
 function renderCharts(){
@@ -681,10 +716,131 @@ function renderCharts(){
 
   wrap.innerHTML = `
     ${legend}
-    <div class="chart-block"><div class="chart-title">GMV (Rp)</div><div class="chart-scroll">${gmvSVG}</div></div>
-    <div class="chart-block"><div class="chart-title">CTR (%)</div><div class="chart-scroll">${ctrSVG}</div></div>
-    <div class="chart-block"><div class="chart-title">Produk Terjual (PCS)</div><div class="chart-scroll">${pcsSVG}</div></div>
+    <div class="chart-block" data-chart="gmv">
+      <div class="chart-block-head"><div class="chart-title">GMV (Rp)</div><button class="chart-dl-btn" data-dl="gmv">⬇ PNG</button></div>
+      <div class="chart-scroll">${gmvSVG}</div>
+    </div>
+    <div class="chart-block" data-chart="ctr">
+      <div class="chart-block-head"><div class="chart-title">CTR (%)</div><button class="chart-dl-btn" data-dl="ctr">⬇ PNG</button></div>
+      <div class="chart-scroll">${ctrSVG}</div>
+    </div>
+    <div class="chart-block" data-chart="pcs">
+      <div class="chart-block-head"><div class="chart-title">Produk Terjual (PCS)</div><button class="chart-dl-btn" data-dl="pcs">⬇ PNG</button></div>
+      <div class="chart-scroll">${pcsSVG}</div>
+    </div>
   `;
+
+  wrap.querySelectorAll('.chart-dl-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=> downloadSingleChart(btn.dataset.dl));
+  });
+}
+
+// ============================================================
+// CHART EXPORT (PNG, high-resolution / retina-sharp)
+// ============================================================
+const CHART_TITLES = { gmv: 'GMV (Rp)', ctr: 'CTR (%)', pcs: 'Produk Terjual (PCS)' };
+
+function svgStringToImage(svgString){
+  return new Promise((resolve, reject)=>{
+    const blob = new Blob([svgString], {type:'image/svg+xml;charset=utf-8'});
+    const url = URL.createObjectURL(blob);
+    const img = new Image();
+    img.onload = ()=>{ URL.revokeObjectURL(url); resolve(img); };
+    img.onerror = (e)=>{ URL.revokeObjectURL(url); reject(e); };
+    img.src = url;
+  });
+}
+
+function triggerBlobDownload(blob, filename){
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+async function downloadSingleChart(key){
+  const block = document.querySelector(`.chart-block[data-chart="${key}"]`);
+  if(!block) return;
+  const svgEl = block.querySelector('svg');
+  if(!svgEl) return;
+
+  const scale = 3; // retina-sharp export
+  const vb = svgEl.viewBox.baseVal;
+  const w = vb.width, h = vb.height;
+  const padOuter = 20, titleH = 28;
+
+  const svgString = new XMLSerializer().serializeToString(svgEl);
+  const img = await svgStringToImage(svgString);
+
+  const canvas = document.createElement('canvas');
+  canvas.width = (w+padOuter*2)*scale;
+  canvas.height = (h+padOuter*2+titleH)*scale;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(scale, scale);
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillRect(0,0,w+padOuter*2,h+padOuter*2+titleH);
+  ctx.fillStyle = '#0F172A';
+  ctx.font = '700 15px -apple-system, Segoe UI, Roboto, sans-serif';
+  ctx.fillText(CHART_TITLES[key] || '', padOuter, padOuter);
+  ctx.drawImage(img, padOuter, padOuter+titleH, w, h);
+
+  canvas.toBlob(blob=>{
+    triggerBlobDownload(blob, `grafik-${key}-live-${new Date().toISOString().slice(0,10)}.png`);
+  }, 'image/png');
+}
+
+async function downloadAllCharts(){
+  const keys = ['gmv','ctr','pcs'];
+  const blocks = keys.map(k=> document.querySelector(`.chart-block[data-chart="${k}"]`)).filter(Boolean);
+  if(blocks.length===0){ alert('Belum ada grafik untuk didownload.'); return; }
+
+  const scale = 3;
+  const padOuter = 24, titleH = 30, gapBetween = 26, headerH = 46;
+  const imgs = [];
+  let maxW = 0, totalH = headerH;
+
+  for(const key of keys){
+    const block = document.querySelector(`.chart-block[data-chart="${key}"]`);
+    if(!block) continue;
+    const svgEl = block.querySelector('svg');
+    const vb = svgEl.viewBox.baseVal;
+    const svgString = new XMLSerializer().serializeToString(svgEl);
+    const img = await svgStringToImage(svgString);
+    imgs.push({key, img, w:vb.width, h:vb.height});
+    maxW = Math.max(maxW, vb.width);
+    totalH += titleH + vb.height + gapBetween;
+  }
+
+  const canvasW = maxW + padOuter*2;
+  const canvasH = totalH + padOuter*2;
+  const canvas = document.createElement('canvas');
+  canvas.width = canvasW*scale;
+  canvas.height = canvasH*scale;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(scale, scale);
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillRect(0,0,canvasW,canvasH);
+
+  ctx.fillStyle = '#0F172A';
+  ctx.font = '700 18px -apple-system, Segoe UI, Roboto, sans-serif';
+  ctx.fillText('Grafik Performa Live per Toko', padOuter, padOuter+18);
+  ctx.fillStyle = '#64748B';
+  ctx.font = '400 11px -apple-system, Segoe UI, Roboto, sans-serif';
+  ctx.fillText('Ini vs Lalu, diurutkan dari GMV tertinggi', padOuter, padOuter+34);
+
+  let y = padOuter + headerH;
+  imgs.forEach(({key, img, w, h})=>{
+    ctx.fillStyle = '#0F172A';
+    ctx.font = '700 15px -apple-system, Segoe UI, Roboto, sans-serif';
+    ctx.fillText(CHART_TITLES[key] || '', padOuter, y+titleH-10);
+    ctx.drawImage(img, padOuter, y+titleH, w, h);
+    y += titleH + h + gapBetween;
+  });
+
+  canvas.toBlob(blob=>{
+    triggerBlobDownload(blob, `grafik-live-semua-${new Date().toISOString().slice(0,10)}.png`);
+  }, 'image/png');
 }
 
 function renderChips(){
@@ -1033,6 +1189,7 @@ document.querySelectorAll('.tab').forEach(tab=>{
 
 document.getElementById('downloadCsvBtn').addEventListener('click', downloadCSV);
 document.getElementById('downloadXlsxBtn').addEventListener('click', downloadXLSX);
+document.getElementById('downloadAllChartsBtn').addEventListener('click', downloadAllCharts);
 
 document.getElementById('copyBtn').addEventListener('click', async ()=>{
   const md = tableToMarkdown();
