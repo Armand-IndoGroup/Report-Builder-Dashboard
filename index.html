@@ -87,7 +87,7 @@ h1{
 }
 .chip button.x:hover{color:var(--danger);}
 
-/* platform badge — small monogram, not a brand logo */
+/* platform badge — small monogram, used in file chips */
 .platform-badge{
   display:inline-flex; align-items:center; justify-content:center; flex:none;
   width:16px; height:16px; border-radius:4px; font-size:9.5px; font-weight:700;
@@ -95,6 +95,14 @@ h1{
 }
 .platform-badge.shopee{background:var(--shopee);}
 .platform-badge.tiktok{background:var(--tiktok);}
+
+/* platform label — full text, used in the table */
+.platform-label{
+  display:inline-block; flex:none; font-size:10px; font-weight:700; text-transform:uppercase;
+  letter-spacing:0.03em; padding:2px 7px; border-radius:5px; color:#fff;
+}
+.platform-label.shopee{background:var(--shopee);}
+.platform-label.tiktok{background:var(--tiktok);}
 
 .toolbar{display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-top:14px;}
 .btn{
@@ -623,65 +631,66 @@ const CHART_COLORS = {
   shopee: '#EE4D2D', tiktok: '#0F172A',
 };
 
-function buildHorizontalBarChartSVG(rows, fmt, title){
-  const barH = 14, pairGap = 3, groupGap = 18;
-  const rowBlock = barH*2 + pairGap + groupGap;
-  const labelW = 152, valueGap = 8, padTop = 14, padBottom = 10, padLeft = 10, padRight = 58;
-  const totalW = 620;
-  const barAreaW = totalW - labelW - padRight - padLeft;
-  const height = padTop + rows.length*rowBlock - groupGap + padBottom;
+function buildVerticalBarChartSVG(rows, fmt){
+  const barW = 26, pairGap = 4, groupGap = 30;
+  const groupW = barW*2 + pairGap + groupGap;
+  const chartH = 190;
+  const padTop = 22, padBottom = 50, padLeft = 16, padRight = 16;
+  const width = Math.max(380, rows.length*groupW + padLeft + padRight);
+  const height = padTop + chartH + padBottom;
   const C = CHART_COLORS;
 
   const vals = [];
   rows.forEach(r=>{ if(r.ini!=null) vals.push(r.ini); if(r.lalu!=null) vals.push(r.lalu); });
   const maxVal = Math.max(1, ...vals);
-  const axisX = padLeft + labelW;
+  const baseY = padTop + chartH;
 
-  // background zebra bands (one per toko row) — reduces "flat/plain" feel, eases eye tracking
+  // background zebra bands (one per toko group) — reduces "flat/plain" feel, eases eye tracking
   let zebra = '';
   rows.forEach((r,i)=>{
     if(i%2===1){
-      const by = padTop + i*rowBlock - (groupGap/2);
-      zebra += `<rect x="0" y="${by}" width="${totalW}" height="${rowBlock}" fill="${C.zebra}"/>`;
+      const bx = padLeft + i*groupW - (groupGap/2 - pairGap/2);
+      zebra += `<rect x="${bx}" y="${padTop-10}" width="${groupW}" height="${chartH+padBottom+2}" fill="${C.zebra}"/>`;
     }
   });
 
-  // vertical gridlines at 25/50/75/100% of max value — adds structure without clutter
+  // horizontal gridlines at 25/50/75/100% of max value — adds structure without clutter
   let grid = '';
   [0.25,0.5,0.75,1].forEach(frac=>{
-    const gx = axisX + frac*barAreaW;
-    grid += `<line x1="${gx}" y1="${padTop-6}" x2="${gx}" y2="${height-padBottom+2}" stroke="${C.grid}" stroke-width="1" stroke-dasharray="2,3"/>`;
+    const gy = baseY - frac*chartH;
+    grid += `<line x1="${padLeft-4}" y1="${gy}" x2="${width-padRight+4}" y2="${gy}" stroke="${C.grid}" stroke-width="1" stroke-dasharray="2,3"/>`;
   });
 
   let bars = '';
   rows.forEach((r,i)=>{
-    const gy = padTop + i*rowBlock;
+    const gx = padLeft + i*groupW;
     const hasIni = r.ini!=null;
     const hasLalu = r.lalu!=null;
-    const wIni = hasIni ? (r.ini/maxVal*barAreaW) : 0;
-    const wLalu = hasLalu ? (r.lalu/maxVal*barAreaW) : 0;
-    const yIni = gy, yLalu = gy + barH + pairGap;
-    const midY = gy + barH + pairGap/2;
-    const pillR = barH/2;
-
-    const badgeColor = r.platform==='Shopee' ? C.shopee : C.tiktok;
-    bars += `<circle cx="${padLeft+6}" cy="${midY}" r="5" fill="${badgeColor}" stroke="#fff" stroke-width="1.4"/>`;
-    bars += `<text x="${padLeft+16}" y="${midY+3.5}" font-size="11" font-weight="600" fill="${C.ink}">${escapeHtml(r.shop)}</text>`;
+    const hIni = hasIni ? (r.ini/maxVal*chartH) : 0;
+    const hLalu = hasLalu ? (r.lalu/maxVal*chartH) : 0;
+    const xIni = gx, xLalu = gx + barW + pairGap;
+    const yIni = baseY - hIni, yLalu = baseY - hLalu;
+    const labelCx = gx + barW + pairGap/2;
 
     if(hasIni){
-      bars += `<rect x="${axisX}" y="${yIni}" width="${Math.max(wIni,pillR*2)}" height="${barH}" fill="${C.ini}" rx="${pillR}"/>`;
-      bars += `<text x="${axisX+wIni+valueGap}" y="${yIni+barH-3}" font-size="9.5" font-weight="600" fill="${C.ink}">${escapeHtml(fmt(r.ini))}</text>`;
+      bars += `<rect x="${xIni}" y="${yIni}" width="${barW}" height="${Math.max(hIni,2)}" fill="${C.ini}" rx="4"/>`;
+      bars += `<text x="${xIni+barW/2}" y="${yIni-6}" text-anchor="middle" font-size="10.5" font-weight="700" fill="${C.ink}">${escapeHtml(fmt(r.ini))}</text>`;
     }
     if(hasLalu){
-      bars += `<rect x="${axisX}" y="${yLalu}" width="${Math.max(wLalu,pillR*2)}" height="${barH}" fill="${C.lalu}" rx="${pillR}"/>`;
-      bars += `<text x="${axisX+wLalu+valueGap}" y="${yLalu+barH-3}" font-size="9.5" fill="${C.muted}">${escapeHtml(fmt(r.lalu))}</text>`;
+      bars += `<rect x="${xLalu}" y="${yLalu}" width="${barW}" height="${Math.max(hLalu,2)}" fill="${C.lalu}" rx="4"/>`;
+      bars += `<text x="${xLalu+barW/2}" y="${yLalu-6}" text-anchor="middle" font-size="10.5" fill="${C.muted}">${escapeHtml(fmt(r.lalu))}</text>`;
     }
+
+    const badgeColor = r.platform==='Shopee' ? C.shopee : C.tiktok;
+    const dotY = baseY + 16;
+    bars += `<circle cx="${labelCx}" cy="${dotY}" r="4" fill="${badgeColor}" stroke="#fff" stroke-width="1.3"/>`;
+    bars += `<text x="${labelCx}" y="${dotY+16}" text-anchor="middle" font-size="10.5" font-weight="600" fill="${C.ink}">${escapeHtml(r.shop)}</text>`;
   });
 
-  bars += `<line x1="${axisX}" y1="${padTop-6}" x2="${axisX}" y2="${height-padBottom+2}" stroke="${C.border}" stroke-width="1.4"/>`;
+  bars += `<line x1="${padLeft-4}" y1="${baseY}" x2="${width-padRight+4}" y2="${baseY}" stroke="${C.border}" stroke-width="1.4"/>`;
 
-  return `<svg viewBox="0 0 ${totalW} ${height}" width="100%" height="${height}" style="display:block; max-width:${totalW}px; background:#fff;">
-    <rect x="0" y="0" width="${totalW}" height="${height}" fill="#fff"/>
+  return `<svg viewBox="0 0 ${width} ${height}" width="100%" height="${height}" style="display:block; max-width:${width}px; background:#fff;">
+    <rect x="0" y="0" width="${width}" height="${height}" fill="#fff"/>
     ${zebra}${grid}${bars}
   </svg>`;
 }
@@ -710,9 +719,9 @@ function renderCharts(){
     <span class="group"><span class="swatch dot shopee"></span>Shopee<span style="margin-left:14px"></span><span class="swatch dot tiktok"></span>TikTok</span>
   </div>`;
 
-  const gmvSVG = buildHorizontalBarChartSVG(rows.map(r=>({shop:r.shop, platform:r.platform, ini:r.gmvIni, lalu:r.gmvLalu})), formatCompactRp);
-  const ctrSVG = buildHorizontalBarChartSVG(rows.map(r=>({shop:r.shop, platform:r.platform, ini:r.ctrIni, lalu:r.ctrLalu})), formatCtrChart);
-  const pcsSVG = buildHorizontalBarChartSVG(rows.map(r=>({shop:r.shop, platform:r.platform, ini:r.produkIni, lalu:r.produkLalu})), formatCompactInt);
+  const gmvSVG = buildVerticalBarChartSVG(rows.map(r=>({shop:r.shop, platform:r.platform, ini:r.gmvIni, lalu:r.gmvLalu})), formatCompactRp);
+  const ctrSVG = buildVerticalBarChartSVG(rows.map(r=>({shop:r.shop, platform:r.platform, ini:r.ctrIni, lalu:r.ctrLalu})), formatCtrChart);
+  const pcsSVG = buildVerticalBarChartSVG(rows.map(r=>({shop:r.shop, platform:r.platform, ini:r.produkIni, lalu:r.produkLalu})), formatCompactInt);
 
   wrap.innerHTML = `
     ${legend}
@@ -954,7 +963,7 @@ function renderTable(){
     const gPenonton = growth(r.penontonIni, r.penontonLalu);
     const noPenonton = r.penontonIni===null || r.penontonIni===undefined;
     html += `<tr>
-      <td class="shop"><span class="platform-badge ${r.platform==='Shopee'?'shopee':'tiktok'}">${r.platform==='Shopee'?'S':'T'}</span>${r.shop}${r.incomplete?' <span style="color:var(--danger)">⚠</span>':''}</td>
+      <td class="shop"><span class="platform-label ${r.platform==='Shopee'?'shopee':'tiktok'}">${r.platform}</span>${r.shop}${r.incomplete?' <span style="color:var(--danger)">⚠</span>':''}</td>
       <td>${fmtInt(r.gmvIni)}</td><td>${fmtInt(r.gmvLalu)}</td><td>${fmtGrowth(gGmv)}</td>
       <td>${fmtInt(r.produkIni)}</td><td>${fmtInt(r.produkLalu)}</td><td>${fmtGrowth(gProduk)}</td>
       <td>${fmtPct(r.cvrIni)}</td><td>${fmtPct(r.cvrLalu)}</td><td>${fmtGrowth(gCvr)}</td>
