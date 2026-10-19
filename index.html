@@ -293,7 +293,11 @@ tr.total td{font-weight:700; background:var(--primary-soft) !important; border-t
   <div class="card" id="productsCard">
     <div class="toolbar" style="margin-top:0; margin-bottom:6px;">
       <span class="note" id="productsTitle" style="margin:0;"></span>
-      <button class="btn primary" id="downloadProductsBtn">⬇ Download Semua (PNG HD)</button>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <button class="btn" id="downloadProductsCsvBtn">⬇ CSV</button>
+        <button class="btn" id="downloadProductsXlsxBtn">⬇ Excel</button>
+        <button class="btn primary" id="downloadProductsBtn">⬇ Download Semua (PNG HD)</button>
+      </div>
     </div>
     <div class="note" style="margin:0 0 14px;">Hanya produk dengan GMV &gt; 0 · Ini vs Lalu dicocokkan lewat ID Produk</div>
     <div id="productsWrap"></div>
@@ -301,7 +305,7 @@ tr.total td{font-weight:700; background:var(--primary-soft) !important; border-t
 
   <div class="card" id="chartsCard">
     <div class="toolbar" style="margin-top:0; margin-bottom:6px;">
-      <span class="note">Grafik performa <b>Live</b> per toko — Ini vs Lalu, diurutkan dari GMV tertinggi</span>
+      <span class="note">Grafik batang horizontal <b>Live</b> per toko — Ini vs Lalu, diurutkan dari GMV tertinggi</span>
       <button class="btn primary" id="downloadAllChartsBtn">⬇ Download Semua Grafik</button>
     </div>
     <div id="chartsWrap"></div>
@@ -918,6 +922,51 @@ function drawProductsToCanvas(cards, label){
   return canvas;
 }
 
+// ============================================================
+// EXPORT EXCEL / CSV — Top 10 produk TikTok (semua toko digabung)
+// ============================================================
+function buildProductsAOA(){
+  const {cards, label} = productCardsCache;
+  const header = ['Toko','Periode Ini','Periode Lalu','Rank','Nama Produk','No ID Produk','Terjual (pcs)',`GMV ${label} Ini (Rp)`,`GMV ${label} Lalu (Rp)`,'Growth GMV (%)'];
+  const aoa = [header];
+  cards.forEach(c=>{
+    c.top.forEach((p,i)=>{
+      let lalu = '', gr = '';
+      if(c.has2){
+        lalu = p.gmvLalu;
+        if(p.gmvLalu>0){ const g = growth(p.gmvIni, p.gmvLalu); gr = (g===null||!isFinite(g)) ? '' : Math.round(g*100)/100; }
+        else gr = 'Baru';
+      }
+      aoa.push([c.shop, c.periodIni, c.periodLalu, i+1, p.name, String(p.id||''), p.pcsIni, p.gmvIni, lalu, gr]);
+    });
+  });
+  return aoa;
+}
+
+function downloadProductsCSV(){
+  const aoa = buildProductsAOA();
+  if(aoa.length<=1){ alert('Belum ada data produk TikTok untuk didownload.'); return; }
+  const esc = (v)=>{
+    const s = String(v===undefined||v===null?'':v);
+    return /[",\n]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s;
+  };
+  // No ID Produk (19 digit) ditulis ="..." supaya Excel tidak mengubahnya jadi 1,7E+18
+  const idCol = 5;
+  const csv = aoa.map((row,ri)=> row.map((v,ci)=> (ri>0 && ci===idCol && v) ? `="${v}"` : esc(v)).join(',')).join('\r\n');
+  const blob = new Blob(['\ufeff'+csv], {type:'text/csv;charset=utf-8;'});
+  triggerBlobDownload(blob, `top-produk-tiktok-${productCardsCache.label.toLowerCase()}-${new Date().toISOString().slice(0,10)}.csv`);
+}
+
+function downloadProductsXLSX(){
+  const aoa = buildProductsAOA();
+  if(aoa.length<=1){ alert('Belum ada data produk TikTok untuk didownload.'); return; }
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  ws['!cols'] = [{wch:16},{wch:24},{wch:24},{wch:6},{wch:70},{wch:22},{wch:13},{wch:18},{wch:18},{wch:14}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, `Top Produk ${productCardsCache.label}`);
+  XLSX.writeFile(wb, `top-produk-tiktok-${productCardsCache.label.toLowerCase()}-${new Date().toISOString().slice(0,10)}.xlsx`);
+}
+
 function safeFileName(s){
   return String(s||'toko').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'') || 'toko';
 }
@@ -980,67 +1029,62 @@ const CHART_COLORS = {
   shopee: '#EE4D2D', tiktok: '#0F172A',
 };
 
+// Grafik batang horizontal berkelompok (clustered bar): satu grup per toko, batang Ini & Lalu.
 function buildVerticalBarChartSVG(rows, fmt){
-  const barW = 26, pairGap = 4, groupGap = 30;
-  const groupW = barW*2 + pairGap + groupGap;
-  const chartH = 190;
-  const padTop = 22, padBottom = 50, padLeft = 16, padRight = 16;
-  const width = Math.max(380, rows.length*groupW + padLeft + padRight);
-  const height = padTop + chartH + padBottom;
   const C = CHART_COLORS;
+  const width = 780, padLeft = 150, padRight = 96, padTop = 40, padBottom = 14;
+  const barH = 19, pairGap = 3, groupGap = 24;
+  const groupH = barH*2 + pairGap + groupGap;
+  const plotW = width - padLeft - padRight;
+  const height = padTop + rows.length*groupH - groupGap/2 + padBottom;
+  const plotTop = padTop, plotBottom = height - padBottom;
 
   const vals = [];
   rows.forEach(r=>{ if(r.ini!=null) vals.push(r.ini); if(r.lalu!=null) vals.push(r.lalu); });
   const maxVal = Math.max(1, ...vals);
-  const baseY = padTop + chartH;
 
-  // background zebra bands (one per toko group) — reduces "flat/plain" feel, eases eye tracking
-  let zebra = '';
-  rows.forEach((r,i)=>{
-    if(i%2===1){
-      const bx = padLeft + i*groupW - (groupGap/2 - pairGap/2);
-      zebra += `<rect x="${bx}" y="${padTop-10}" width="${groupW}" height="${chartH+padBottom+2}" fill="${C.zebra}"/>`;
-    }
-  });
+  // legenda di dalam gambar supaya ikut tersimpan saat di-download
+  let legend = '';
+  legend += `<rect x="${padLeft}" y="10" width="11" height="11" rx="2" fill="${C.ini}"/><text x="${padLeft+16}" y="19.5" font-size="11.5" fill="${C.muted}">Ini</text>`;
+  legend += `<rect x="${padLeft+52}" y="10" width="11" height="11" rx="2" fill="${C.lalu}"/><text x="${padLeft+68}" y="19.5" font-size="11.5" fill="${C.muted}">Lalu</text>`;
+  legend += `<circle cx="${padLeft+134}" cy="15.5" r="4.5" fill="${C.shopee}"/><text x="${padLeft+144}" y="19.5" font-size="11.5" fill="${C.muted}">Shopee</text>`;
+  legend += `<circle cx="${padLeft+210}" cy="15.5" r="4.5" fill="${C.tiktok}"/><text x="${padLeft+220}" y="19.5" font-size="11.5" fill="${C.muted}">TikTok</text>`;
 
-  // horizontal gridlines at 25/50/75/100% of max value — adds structure without clutter
-  let grid = '';
+  let zebra = '', grid = '', bars = '';
   [0.25,0.5,0.75,1].forEach(frac=>{
-    const gy = baseY - frac*chartH;
-    grid += `<line x1="${padLeft-4}" y1="${gy}" x2="${width-padRight+4}" y2="${gy}" stroke="${C.grid}" stroke-width="1" stroke-dasharray="2,3"/>`;
+    const gx = padLeft + frac*plotW;
+    grid += `<line x1="${gx}" y1="${plotTop-4}" x2="${gx}" y2="${plotBottom}" stroke="${C.grid}" stroke-width="1" stroke-dasharray="2,3"/>`;
   });
 
-  let bars = '';
   rows.forEach((r,i)=>{
-    const gx = padLeft + i*groupW;
-    const hasIni = r.ini!=null;
-    const hasLalu = r.lalu!=null;
-    const hIni = hasIni ? (r.ini/maxVal*chartH) : 0;
-    const hLalu = hasLalu ? (r.lalu/maxVal*chartH) : 0;
-    const xIni = gx, xLalu = gx + barW + pairGap;
-    const yIni = baseY - hIni, yLalu = baseY - hLalu;
-    const labelCx = gx + barW + pairGap/2;
+    const gy = padTop + i*groupH;
+    if(i%2===1) zebra += `<rect x="0" y="${gy-groupGap/2}" width="${width}" height="${groupH}" fill="${C.zebra}"/>`;
+    const yIni = gy, yLalu = gy + barH + pairGap;
 
-    if(hasIni){
-      bars += `<rect x="${xIni}" y="${yIni}" width="${barW}" height="${Math.max(hIni,2)}" fill="${C.ini}" rx="4"/>`;
-      bars += `<text x="${xIni+barW/2}" y="${yIni-6}" text-anchor="middle" font-size="10.5" font-weight="700" fill="${C.ink}">${escapeHtml(fmt(r.ini))}</text>`;
-    }
-    if(hasLalu){
-      bars += `<rect x="${xLalu}" y="${yLalu}" width="${barW}" height="${Math.max(hLalu,2)}" fill="${C.lalu}" rx="4"/>`;
-      bars += `<text x="${xLalu+barW/2}" y="${yLalu-6}" text-anchor="middle" font-size="10.5" fill="${C.muted}">${escapeHtml(fmt(r.lalu))}</text>`;
-    }
+    const dotColor = r.platform==='Shopee' ? C.shopee : C.tiktok;
+    const cy = gy + (barH*2+pairGap)/2;
+    let name = String(r.shop||'');
+    if(name.length>17) name = name.slice(0,16)+'…';
+    bars += `<circle cx="16" cy="${cy}" r="4.5" fill="${dotColor}"/>`;
+    bars += `<text x="28" y="${cy+4}" font-size="12.5" font-weight="700" fill="${C.ink}">${escapeHtml(name)}</text>`;
 
-    const badgeColor = r.platform==='Shopee' ? C.shopee : C.tiktok;
-    const dotY = baseY + 16;
-    bars += `<circle cx="${labelCx}" cy="${dotY}" r="4" fill="${badgeColor}" stroke="#fff" stroke-width="1.3"/>`;
-    bars += `<text x="${labelCx}" y="${dotY+16}" text-anchor="middle" font-size="10.5" font-weight="600" fill="${C.ink}">${escapeHtml(r.shop)}</text>`;
+    if(r.ini!=null){
+      const w = Math.max(r.ini/maxVal*plotW, 2);
+      bars += `<rect x="${padLeft}" y="${yIni}" width="${w}" height="${barH}" fill="${C.ini}" rx="3"/>`;
+      bars += `<text x="${padLeft+w+7}" y="${yIni+barH/2+4}" font-size="11.5" font-weight="700" fill="${C.ink}">${escapeHtml(fmt(r.ini))}</text>`;
+    }
+    if(r.lalu!=null){
+      const w = Math.max(r.lalu/maxVal*plotW, 2);
+      bars += `<rect x="${padLeft}" y="${yLalu}" width="${w}" height="${barH}" fill="${C.lalu}" rx="3"/>`;
+      bars += `<text x="${padLeft+w+7}" y="${yLalu+barH/2+4}" font-size="11.5" fill="${C.muted}">${escapeHtml(fmt(r.lalu))}</text>`;
+    }
   });
 
-  bars += `<line x1="${padLeft-4}" y1="${baseY}" x2="${width-padRight+4}" y2="${baseY}" stroke="${C.border}" stroke-width="1.4"/>`;
+  bars += `<line x1="${padLeft}" y1="${plotTop-4}" x2="${padLeft}" y2="${plotBottom}" stroke="${C.border}" stroke-width="1.4"/>`;
 
-  return `<svg viewBox="0 0 ${width} ${height}" width="100%" height="${height}" style="display:block; max-width:${width}px; background:#fff;">
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="100%" height="${height}" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" style="display:block; max-width:${width}px; background:#fff;">
     <rect x="0" y="0" width="${width}" height="${height}" fill="#fff"/>
-    ${zebra}${grid}${bars}
+    ${zebra}${grid}${legend}${bars}
   </svg>`;
 }
 
@@ -1062,18 +1106,11 @@ function renderCharts(){
     return;
   }
 
-  const legend = `<div class="chart-legend">
-    <span class="group"><span class="swatch ini"></span>Ini<span style="margin-left:14px"></span><span class="swatch lalu"></span>Lalu</span>
-    <span class="sep"></span>
-    <span class="group"><span class="swatch dot shopee"></span>Shopee<span style="margin-left:14px"></span><span class="swatch dot tiktok"></span>TikTok</span>
-  </div>`;
-
   const gmvSVG = buildVerticalBarChartSVG(rows.map(r=>({shop:r.shop, platform:r.platform, ini:r.gmvIni, lalu:r.gmvLalu})), formatCompactRp);
   const ctrSVG = buildVerticalBarChartSVG(rows.map(r=>({shop:r.shop, platform:r.platform, ini:r.ctrIni, lalu:r.ctrLalu})), formatCtrChart);
   const pcsSVG = buildVerticalBarChartSVG(rows.map(r=>({shop:r.shop, platform:r.platform, ini:r.produkIni, lalu:r.produkLalu})), formatCompactInt);
 
   wrap.innerHTML = `
-    ${legend}
     <div class="chart-block" data-chart="gmv">
       <div class="chart-block-head"><div class="chart-title">GMV (Rp)</div><button class="chart-dl-btn" data-dl="gmv">⬇ PNG</button></div>
       <div class="chart-scroll">${gmvSVG}</div>
@@ -1550,6 +1587,8 @@ document.getElementById('downloadCsvBtn').addEventListener('click', downloadCSV)
 document.getElementById('downloadXlsxBtn').addEventListener('click', downloadXLSX);
 document.getElementById('downloadAllChartsBtn').addEventListener('click', downloadAllCharts);
 document.getElementById('downloadProductsBtn').addEventListener('click', ()=> downloadProductsPNG());
+document.getElementById('downloadProductsCsvBtn').addEventListener('click', downloadProductsCSV);
+document.getElementById('downloadProductsXlsxBtn').addEventListener('click', downloadProductsXLSX);
 
 document.getElementById('copyBtn').addEventListener('click', async ()=>{
   const md = tableToMarkdown();
