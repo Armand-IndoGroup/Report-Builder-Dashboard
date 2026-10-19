@@ -7,13 +7,14 @@
 <link rel="apple-touch-icon" sizes="180x180" href="logo.png">
 <title>Indo Group Report Builder</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
 <style>
 :root{
   --ink:#0F172A;
   --muted:#64748B;
   --muted-2:#94A3B8;
-  --surface:#F1F5F9;
+  --surface:#F1F0EB;
+  --page:#F6F5F1;
   --card:#FFFFFF;
   --border:#E2E8F0;
   --primary:#1B4332;
@@ -29,36 +30,52 @@
 }
 *{box-sizing:border-box;}
 html, body{ height:100%; }
+html{ overflow-x:hidden; }
+@supports (overflow:clip){ html{ overflow-x:clip; } }
 body{
-  margin:0; background:var(--surface); color:var(--ink);
+  margin:0; background:var(--page); color:var(--ink);
   font-family:var(--body); padding:28px 20px 80px;
   -webkit-font-smoothing:antialiased;
 }
 .wrap{max-width:1280px; margin:0 auto;}
 
+/* header: pita forest green selebar layar; kartu upload "menumpang" di bagian bawahnya */
 header.top{
-  margin-bottom:20px; padding-bottom:20px; border-bottom:1px solid var(--border);
+  position:relative; z-index:0; margin-bottom:22px; padding:4px 0 6px;
+  display:flex; align-items:flex-start; gap:16px;
 }
+header.top::before{
+  content:""; position:absolute; z-index:-1; left:50%; transform:translateX(-50%);
+  width:100vw; top:-28px; bottom:-130px; background:var(--primary);
+}
+.brand-logo{
+  flex:none; width:56px; height:56px; border-radius:12px; background:#fff;
+  display:flex; align-items:center; justify-content:center; padding:7px;
+  box-shadow:0 2px 8px rgba(0,0,0,.15);
+}
+.brand-logo img{width:100%; height:100%; object-fit:contain; display:block;}
 .eyebrow{
   font-family:var(--mono); font-size:11px; letter-spacing:0.08em; text-transform:uppercase;
-  color:var(--primary); font-weight:600; margin-bottom:8px;
+  color:#B7E4C7; font-weight:600; margin-bottom:8px;
 }
 h1{
   font-family:var(--display); font-weight:700; font-size:26px; margin:0 0 6px;
-  color:var(--ink); letter-spacing:-0.01em;
+  color:#fff; letter-spacing:-0.01em;
 }
-.sub{color:var(--muted); font-size:13.5px; margin:0; max-width:720px; line-height:1.55;}
+.sub{color:rgba(255,255,255,.78); font-size:13.5px; margin:0; max-width:720px; line-height:1.55;}
+.sub b{color:#fff;}
 
 .card{
-  background:var(--card); border:1px solid var(--border); border-radius:10px;
+  position:relative; background:var(--card); border:1px solid #E4E2DC; border-radius:12px;
   padding:20px; margin-bottom:16px;
-  box-shadow:0 1px 2px rgba(15,23,42,0.04);
+  box-shadow:0 1px 3px rgba(40,36,24,0.06);
 }
+.card.lifted{ border-color:transparent; box-shadow:0 10px 30px rgba(18,48,31,0.20); }
 
 /* drop zone */
 .drop{
   border:2px dashed var(--border); border-radius:10px; padding:34px 20px;
-  text-align:center; cursor:pointer; transition: all .15s ease; background:#F8FAFC;
+  text-align:center; cursor:pointer; transition: all .15s ease; background:#FAFAF7;
 }
 .drop.drag{ border-color:var(--primary); background:var(--primary-soft); }
 .drop h3{ font-family:var(--display); font-weight:600; font-size:16px; margin:10px 0 4px; color:var(--ink);}
@@ -73,7 +90,7 @@ h1{
 }
 .chip-list{display:flex; flex-wrap:wrap; gap:8px;}
 .chip{
-  display:flex; align-items:center; gap:8px; background:#F8FAFC; border:1px solid var(--border);
+  display:flex; align-items:center; gap:8px; background:#FAFAF7; border:1px solid var(--border);
   border-radius:8px; padding:8px 10px; font-size:12.5px; max-width:100%;
 }
 .chip.warn{border-color:#FBBF7D; background:#FFF7ED;}
@@ -84,6 +101,12 @@ h1{
   font-family:var(--body); font-size:12px; border:1px solid var(--border); border-radius:6px;
   padding:2px 4px; background:white;
 }
+.chip select.set{
+  font-weight:600; border-color:transparent; background:transparent; padding:2px 2px; cursor:pointer; color:var(--ink);
+}
+.chip select.set:hover{border-color:var(--border); background:#fff;}
+.chip.warn select{border-color:#F59E0B; background:#fff;}
+.chip .src{font-size:10px; color:var(--muted-2);}
 .chip button.x{
   background:none; border:none; color:var(--muted); cursor:pointer; font-size:14px; padding:0 2px;
 }
@@ -116,13 +139,39 @@ h1{
 .btn.primary:hover{background:var(--primary-deep);}
 .btn:focus-visible, select:focus-visible, .drop:focus-visible{outline:2px solid var(--primary); outline-offset:2px;}
 
+/* download menu */
+.dl-menu{position:relative; display:inline-block;}
+.dl-menu .dl-toggle::after{content:"▾"; margin-left:6px; font-size:11px;}
+.dl-pop{
+  display:none; position:absolute; right:0; top:calc(100% + 6px); z-index:50; min-width:260px; max-height:70vh; overflow:auto;
+  background:#fff; border:1px solid var(--border); border-radius:10px; padding:6px;
+  box-shadow:0 10px 30px rgba(15,23,42,.14);
+}
+.dl-menu.open .dl-pop{display:block;}
+.dl-item{
+  display:flex; justify-content:space-between; align-items:center; gap:14px; width:100%;
+  font-family:var(--body); font-size:13px; font-weight:600; color:var(--ink); text-align:left;
+  background:none; border:none; border-radius:7px; padding:8px 10px; cursor:pointer;
+}
+.dl-item:hover, .dl-item:focus-visible{background:var(--primary-soft); color:var(--primary-deep); outline:none;}
+.dl-item small{font-weight:500; font-size:11px; color:var(--muted);}
+.dl-group{font-family:var(--mono); font-size:10px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted-2); padding:8px 10px 4px;}
+.dl-sep{height:1px; background:var(--border); margin:5px 4px;}
+.toast{
+  position:fixed; left:50%; bottom:22px; transform:translateX(-50%) translateY(20px); opacity:0; pointer-events:none;
+  background:var(--primary-deep); color:#fff; font-size:13px; font-weight:600; padding:10px 16px; border-radius:8px;
+  transition:all .2s ease; z-index:100; max-width:calc(100% - 32px);
+}
+.toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+@media (max-width:640px){ .dl-pop{right:auto; left:0; min-width:min(260px, calc(100vw - 48px));} }
+
 /* tabs */
 .tabs{display:flex; gap:4px; margin:22px 0 14px; border-bottom:1px solid var(--border);}
 .tab{
   font-family:var(--body); font-weight:600; font-size:13px; padding:9px 14px; cursor:pointer;
   color:var(--muted); border-bottom:2px solid transparent; margin-bottom:-1px; border-radius:6px 6px 0 0;
 }
-.tab:hover{color:var(--ink); background:#F8FAFC;}
+.tab:hover{color:var(--ink); background:#FAFAF7;}
 .tab.active{color:var(--primary-deep); border-bottom-color:var(--primary); background:none;}
 .tab .count{
   font-family:var(--body); font-size:10.5px; font-weight:700; background:var(--surface); border-radius:10px;
@@ -206,7 +255,7 @@ tr.total td{font-weight:700; background:var(--primary-soft) !important; border-t
 }
 .pcard-head{
   display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;
-  padding:12px 14px; background:#F8FAFC; border-bottom:1px solid var(--border);
+  padding:12px 14px; background:#FAFAF7; border-bottom:1px solid var(--border);
 }
 .pcard-shop{display:flex; align-items:center; gap:8px; font-weight:700; font-size:14px; color:var(--ink);}
 .pcard-share{font-size:11px; color:var(--muted); font-weight:600;}
@@ -230,11 +279,13 @@ tr.total td{font-weight:700; background:var(--primary-soft) !important; border-t
 .pmeta{display:flex; justify-content:space-between; align-items:center; gap:8px; font-size:11px; color:var(--muted); flex-wrap:wrap;}
 .pgmv{font-size:13px; font-weight:700; color:var(--ink); white-space:nowrap; font-variant-numeric:tabular-nums;}
 .pnew{display:inline-block; font-size:10.5px; font-weight:700; padding:2px 7px; border-radius:20px; color:#92400E; background:#FEF3C7;}
-.pfoot{padding:10px 14px; font-size:11.5px; color:var(--muted); background:#F8FAFC; line-height:1.5;}
+.pfoot{padding:10px 14px; font-size:11.5px; color:var(--muted); background:#FAFAF7; line-height:1.5;}
 .pempty{padding:18px 14px; font-size:12.5px; color:var(--muted);}
 
 @media (max-width: 640px){
   h1{font-size:21px;}
+  .brand-logo{width:44px; height:44px; border-radius:10px; padding:5px;}
+  header.top{gap:12px;}
   table{font-size:11px;}
   thead th, tbody td{padding:7px 6px;}
 }
@@ -243,12 +294,15 @@ tr.total td{font-weight:700; background:var(--primary-soft) !important; border-t
 <body>
 <div class="wrap">
   <header class="top">
+    <div class="brand-logo"><img src="logo.png" alt="Logo Indo Group"></div>
+    <div>
     <div class="eyebrow">Indo Group · Weekly Internal Channel Performance</div>
     <h1>Report Builder</h1>
     <p class="sub">Drag semua file export minggu ini &amp; minggu lalu sekaligus (Shopee: Live/Video overview CSV — TikTok: product list XLSX). Hanya performa <b>Live &amp; Video milik toko sendiri</b> (bukan afiliasi/kreator) yang dihitung. Selain GMV, Produk, dan CVR, sekarang ada Impresi, Klik, CTR, Penonton, dan durasi tonton.</p>
+    </div>
   </header>
 
-  <div class="card">
+  <div class="card lifted">
     <div class="drop" id="dropZone" tabindex="0" role="button" aria-label="Upload file">
       <div class="drop-icon">📂</div>
       <h3>Drop file di sini, atau klik untuk pilih</h3>
@@ -277,9 +331,15 @@ tr.total td{font-weight:700; background:var(--primary-soft) !important; border-t
     <div class="toolbar" style="margin-top:0; margin-bottom:6px;">
       <span class="note" id="tableNote"></span>
       <div style="display:flex; gap:8px; flex-wrap:wrap;">
-        <button class="btn" id="downloadCsvBtn">⬇ CSV</button>
-        <button class="btn" id="downloadXlsxBtn">⬇ Excel</button>
-        <button class="btn primary" id="copyBtn">Salin sebagai Markdown</button>
+        <div class="dl-menu">
+          <button class="btn primary dl-toggle" aria-haspopup="true" aria-expanded="false">⬇ Download</button>
+          <div class="dl-pop" role="menu">
+            <button class="dl-item" role="menuitem" data-action="table-xlsx">Excel <small>tab aktif</small></button>
+            <button class="dl-item" role="menuitem" data-action="table-csv">CSV <small>tab aktif</small></button>
+            <div class="dl-sep"></div>
+            <button class="dl-item" role="menuitem" data-action="table-md">Salin tabel <small>Markdown</small></button>
+          </div>
+        </div>
       </div>
     </div>
     <div id="tableWrap"></div>
@@ -294,9 +354,10 @@ tr.total td{font-weight:700; background:var(--primary-soft) !important; border-t
     <div class="toolbar" style="margin-top:0; margin-bottom:6px;">
       <span class="note" id="productsTitle" style="margin:0;"></span>
       <div style="display:flex; gap:8px; flex-wrap:wrap;">
-        <button class="btn" id="downloadProductsCsvBtn">⬇ CSV</button>
-        <button class="btn" id="downloadProductsXlsxBtn">⬇ Excel</button>
-        <button class="btn primary" id="downloadProductsBtn">⬇ Download Semua (PNG HD)</button>
+        <div class="dl-menu">
+          <button class="btn primary dl-toggle" aria-haspopup="true" aria-expanded="false">⬇ Download</button>
+          <div class="dl-pop" role="menu" id="productsMenu"></div>
+        </div>
       </div>
     </div>
     <div class="note" style="margin:0 0 14px;">Hanya produk dengan GMV &gt; 0 · Ini vs Lalu dicocokkan lewat ID Produk</div>
@@ -306,11 +367,21 @@ tr.total td{font-weight:700; background:var(--primary-soft) !important; border-t
   <div class="card" id="chartsCard">
     <div class="toolbar" style="margin-top:0; margin-bottom:6px;">
       <span class="note">Grafik batang horizontal <b>Live</b> per toko — Ini vs Lalu, diurutkan dari GMV tertinggi</span>
-      <button class="btn primary" id="downloadAllChartsBtn">⬇ Download Semua Grafik</button>
+      <div class="dl-menu">
+        <button class="btn primary dl-toggle" aria-haspopup="true" aria-expanded="false">⬇ Download</button>
+        <div class="dl-pop" role="menu">
+          <button class="dl-item" role="menuitem" data-action="chart-all">PNG semua grafik <small>1 gambar</small></button>
+          <div class="dl-group">Per grafik</div>
+          <button class="dl-item" role="menuitem" data-action="chart-gmv">GMV <small>PNG</small></button>
+          <button class="dl-item" role="menuitem" data-action="chart-ctr">CTR <small>PNG</small></button>
+          <button class="dl-item" role="menuitem" data-action="chart-pcs">Produk Terjual <small>PNG</small></button>
+        </div>
+      </div>
     </div>
     <div id="chartsWrap"></div>
   </div>
 </div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
 // ============================================================
@@ -327,25 +398,58 @@ const SHOP_KEYWORDS = [
   ['Batik 77','Batik 77'],
   ['Menteri','Menteri'],
 ];
+// Penyimpanan di browser (localStorage) — pilihan toko diingat walau halaman di-refresh.
+const LS_USERMAP = 'rb-shopee-userid-map-v1';
+const LS_SHOPS = 'rb-custom-shops-v1';
+function lsGet(key, fallback){
+  try{ const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; }catch(e){ return fallback; }
+}
+function lsSet(key, value){
+  try{ localStorage.setItem(key, JSON.stringify(value)); }catch(e){}
+}
+
+// Cocokkan tanpa peduli huruf besar/kecil, spasi, "_" atau "-": "batik_77" = "Batik 77"
+function normText(s){ return String(s||'').toLowerCase().replace(/[^a-z0-9]/g,''); }
 function detectShopFromText(text){
-  if(!text) return null;
+  const t = normText(text);
+  if(!t) return null;
   for(const [kw, shop] of SHOP_KEYWORDS){
-    if(text.toLowerCase().includes(kw.toLowerCase())) return shop;
+    if(t.includes(normText(kw))) return shop;
   }
   return null;
 }
-const KNOWN_SHOPS = ['Menteri','Oliver','Indonesia','Kenangan Fashion','Batik 77','Rama Shinta','Taksaka'];
+const BASE_SHOPS = ['Menteri','Oliver','Indonesia','Kenangan Fashion','Batik 77','Rama Shinta','Taksaka'];
+let KNOWN_SHOPS = [...BASE_SHOPS];
+function loadCustomShops(){
+  const custom = lsGet(LS_SHOPS, []);
+  if(!Array.isArray(custom)) return;
+  custom.forEach(name=>{
+    if(typeof name!=='string' || !name.trim()) return;
+    if(!KNOWN_SHOPS.includes(name)) KNOWN_SHOPS.push(name);
+    if(!SHOP_KEYWORDS.some(([kw])=> normText(kw)===normText(name))) SHOP_KEYWORDS.push([name, name]);
+  });
+}
+function addCustomShop(name){
+  name = String(name||'').trim().replace(/\s+/g,' ').slice(0,40);
+  if(!name) return null;
+  const existing = KNOWN_SHOPS.find(s=> normText(s)===normText(name));
+  if(existing) return existing;
+  const custom = lsGet(LS_SHOPS, []);
+  custom.push(name);
+  lsSet(LS_SHOPS, custom);
+  loadCustomShops();
+  return name;
+}
 
-// persisted Shopee userId -> shop map
+// Shopee userId -> toko (bawaan + yang pernah dipilih manual)
 let userMap = {'1085789636':'Menteri','1085799742':'Oliver','1089167707':'Indonesia'};
 async function loadUserMap(){
-  try{
-    const r = await window.storage.get('shopee-userid-map-v2', false);
-    if(r && r.value) userMap = {...userMap, ...JSON.parse(r.value)};
-  }catch(e){ /* key not found yet, use defaults */ }
+  const saved = lsGet(LS_USERMAP, {});
+  if(saved && typeof saved==='object') userMap = {...userMap, ...saved};
+  loadCustomShops();
 }
 async function saveUserMap(){
-  try{ await window.storage.set('shopee-userid-map-v2', JSON.stringify(userMap), false); }catch(e){}
+  lsSet(LS_USERMAP, userMap);
 }
 
 // ============================================================
@@ -410,7 +514,8 @@ async function parseShopeeCSV(file){
     channel: isLive ? 'live':'video',
     shopKey: 'shopee:'+userId,
     userId,
-    shop: userMap[userId] || null,
+    shop: userMap[userId] || detectShopFromText(file.name) || null,
+    shopSource: userMap[userId] ? 'id' : (detectShopFromText(file.name) ? 'file' : null),
     periodStart, periodLabel: periodeStr,
     gmv, produk, pesanan, klik, impresi, ctr, cvr: cvrGiven, penonton, durasiTonton, extra,
   };
@@ -468,10 +573,12 @@ async function parseTikTokXLSX(file){
     console.warn(`Kolom tidak ditemukan di ${file.name}:`, missing.join(', '));
   }
 
-  let shop = null;
-  for(let i=4;i<Math.min(grid.length,20);i++){
+  // 1) nama file (paling andal)  2) cadangan: nama produk di baris awal
+  let shop = detectShopFromText(file.name);
+  let shopSource = shop ? 'file' : null;
+  for(let i=4;!shop && i<Math.min(grid.length,20);i++){
     const name = grid[i] && grid[i][0];
-    if(name){ shop = detectShopFromText(String(name)); if(shop) break; }
+    if(name){ shop = detectShopFromText(String(name)); if(shop) shopSource = 'produk'; }
   }
 
   const sums = {
@@ -514,7 +621,7 @@ async function parseTikTokXLSX(file){
   const ctr = (s)=> s.impresi ? (s.klik/s.impresi*100) : 0;
 
   return {
-    fileName:file.name, platform:'TikTok', shopKey:'tiktok:'+(shop||file.name), shop,
+    fileName:file.name, platform:'TikTok', shopKey:'tiktok:'+(shop||file.name), shop, shopSource,
     periodStart, periodLabel, products,
     channels: {
       live: {gmv:sums.live.gmv, produk:sums.live.produk, pesanan:sums.live.pesanan, klik:sums.live.klik, impresi:sums.live.impresi, ctr:ctr(sums.live), cvr:cvr(sums.live), penonton:null, durasiTonton:null, extra:null},
@@ -553,7 +660,14 @@ function removeFile(id){
 function assignShop(id, shop){
   const f = uploaded.find(x=>x.id===id);
   if(!f) return;
+  if(shop==='__new__'){
+    const name = prompt('Nama toko baru (akan diingat di browser ini):');
+    shop = addCustomShop(name);
+    if(!shop){ render(); return; }
+  }
+  if(!shop){ render(); return; }
   f.shop = shop;
+  f.shopSource = 'manual';
   if(f.platform==='Shopee' && f.userId){
     userMap[f.userId] = shop;
     saveUserMap();
@@ -719,7 +833,6 @@ function renderProductCard(c, label, idx){
       <div class="pcard-shop"><span class="platform-label tiktok">TikTok</span>${escapeHtml(c.shop)}</div>
       <div style="display:flex; align-items:center; gap:10px;">
         ${c.top.length && share!==null ? `<div class="pcard-share">Top ${c.top.length} = ${share.toFixed(1).replace('.',',')}% dari GMV ${label}</div>` : ''}
-        <button class="chart-dl-btn" data-product-dl="${idx}" title="Download kartu ${escapeHtml(c.shop)} sebagai PNG HD">⬇ PNG</button>
       </div>
     </div>`;
 
@@ -762,14 +875,12 @@ function renderTopProducts(){
 
   const cards = buildTopProducts(activeTab);
   productCardsCache = {cards, label};
+  renderProductsMenu();
   if(cards.length===0){
     wrap.innerHTML = `<div class="empty-state"><div class="empty-icon">🛍️</div>Upload file product list TikTok (.xlsx) untuk melihat produk dengan GMV tertinggi per toko.</div>`;
     return;
   }
   wrap.innerHTML = `<div class="pgrid">${cards.map((c,i)=> renderProductCard(c, label, i)).join('')}</div>`;
-  wrap.querySelectorAll('[data-product-dl]').forEach(btn=>{
-    btn.addEventListener('click', ()=> downloadProductsPNG(Number(btn.dataset.productDl)));
-  });
 }
 
 // ============================================================
@@ -957,14 +1068,171 @@ function downloadProductsCSV(){
   triggerBlobDownload(blob, `top-produk-tiktok-${productCardsCache.label.toLowerCase()}-${new Date().toISOString().slice(0,10)}.csv`);
 }
 
+// Satu file Excel: sheet "Ringkasan" + satu sheet per toko, sudah berformat
+// (header hijau forest, angka ribuan, growth hijau/merah) supaya siap dipakai.
+const XL = (()=>{
+  const thin = {style:'thin', color:{rgb:'CBD5D1'}};
+  const border = {top:thin, bottom:thin, left:thin, right:thin};
+  const base = {font:{name:'Calibri', sz:11, color:{rgb:'0F172A'}}, alignment:{vertical:'center'}, border};
+  return {
+    title:{font:{name:'Calibri', sz:15, bold:true, color:{rgb:'1B4332'}}},
+    sub:{font:{name:'Calibri', sz:10, color:{rgb:'64748B'}}},
+    head:{font:{name:'Calibri', sz:11, bold:true, color:{rgb:'FFFFFF'}}, fill:{patternType:'solid', fgColor:{rgb:'1B4332'}},
+          alignment:{horizontal:'center', vertical:'center', wrapText:true}, border},
+    cell:(o={})=>({...base, ...o, font:{...base.font, ...(o.font||{})}, alignment:{...base.alignment, ...(o.alignment||{})}}),
+    zebra:{patternType:'solid', fgColor:{rgb:'F4F8F5'}},
+    up:{patternType:'solid', fgColor:{rgb:'059669'}},
+    down:{patternType:'solid', fgColor:{rgb:'DC2626'}},
+    neu:{patternType:'solid', fgColor:{rgb:'D97706'}},
+    total:{patternType:'solid', fgColor:{rgb:'E3EDE7'}},
+    numFmt:'#,##0', pctFmt:'+0.00%;-0.00%;0.00%', shareFmt:'0.0%',
+  };
+})();
+
+function xlSheetName(name, used){
+  let n = String(name||'Toko').replace(/[\[\]:*?\/\\]/g,' ').trim().slice(0,31) || 'Toko';
+  let k = 2, out = n;
+  while(used.has(out.toLowerCase())){ out = n.slice(0, 28)+' ('+(k++)+')'; }
+  used.add(out.toLowerCase());
+  return out;
+}
+function xlPut(ws, r, c, v, s, t){
+  const cell = {v: (v===null||v===undefined) ? '' : v, t: t || (typeof v==='number' ? 'n' : 's')};
+  if(s) cell.s = s;
+  if(s && s.numFmt) cell.z = s.numFmt;
+  ws[XLSX.utils.encode_cell({r, c})] = cell;
+}
+function xlGrowthCell(ws, r, c, ini, lalu, has2, zebraFill){
+  if(!has2){ xlPut(ws, r, c, '—', XL.cell({alignment:{horizontal:'center'}, fill:zebraFill})); return; }
+  if(!(lalu>0)){
+    xlPut(ws, r, c, 'Baru', XL.cell({alignment:{horizontal:'center'}, fill:XL.neu, font:{bold:true, color:{rgb:'FFFFFF'}}}));
+    return;
+  }
+  const g = (ini - lalu)/lalu;
+  xlPut(ws, r, c, g, XL.cell({numFmt:XL.pctFmt, alignment:{horizontal:'center'}, fill: g>=0 ? XL.up : XL.down,
+    font:{bold:true, color:{rgb:'FFFFFF'}}}), 'n');
+}
+
+function buildProductsSummarySheet(cards, label){
+  const ws = {};
+  const header = ['Toko', 'Periode Ini', 'Periode Lalu', `GMV ${label} Toko (Rp)`, 'GMV Top 10 Ini (Rp)',
+                  'Kontribusi Top 10', 'GMV Top 10 Lalu (Rp)', 'Growth Top 10', 'Produk #1'];
+  const W = header.length;
+  xlPut(ws, 0, 0, `Ringkasan Top ${TOP_PRODUCTS_N} Produk TikTok — GMV ${label}`, XL.title);
+  xlPut(ws, 1, 0, `Diurutkan dari GMV ${label} toko tertinggi · Detail tiap toko ada di sheet berikutnya`, XL.sub);
+  header.forEach((h,c)=> xlPut(ws, 3, c, h, XL.head));
+  let r = 4;
+  const tot = {shop:0, ini:0, lalu:0, anyLalu:false};
+  cards.forEach((c,i)=>{
+    const z = i%2 ? XL.zebra : undefined;
+    const ini = c.top.reduce((s,p)=> s+p.gmvIni, 0);
+    const lalu = c.has2 ? c.top.reduce((s,p)=> s+(p.gmvLalu||0), 0) : null;
+    tot.shop += c.shopGmv||0; tot.ini += ini; if(c.has2){ tot.lalu += lalu; tot.anyLalu = true; }
+    xlPut(ws, r, 0, c.shop, XL.cell({font:{bold:true}, fill:z}));
+    xlPut(ws, r, 1, c.periodIni, XL.cell({fill:z}));
+    xlPut(ws, r, 2, c.has2 ? c.periodLalu : '—', XL.cell({fill:z}));
+    xlPut(ws, r, 3, c.shopGmv||0, XL.cell({numFmt:XL.numFmt, fill:z}), 'n');
+    xlPut(ws, r, 4, ini, XL.cell({numFmt:XL.numFmt, fill:z}), 'n');
+    if(c.shopGmv>0) xlPut(ws, r, 5, ini/c.shopGmv, XL.cell({numFmt:XL.shareFmt, alignment:{horizontal:'center'}, fill:z}), 'n');
+    else xlPut(ws, r, 5, '—', XL.cell({alignment:{horizontal:'center'}, fill:z}));
+    if(c.has2) xlPut(ws, r, 6, lalu, XL.cell({numFmt:XL.numFmt, fill:z}), 'n');
+    else xlPut(ws, r, 6, '—', XL.cell({alignment:{horizontal:'center'}, fill:z}));
+    xlGrowthCell(ws, r, 7, ini, lalu, c.has2, z);
+    xlPut(ws, r, 8, c.top[0] ? shortProductName(c.top[0].name) : '—', XL.cell({fill:z}));
+    r++;
+  });
+  const T = XL.cell({font:{bold:true}, fill:XL.total});
+  xlPut(ws, r, 0, 'Total', T);
+  xlPut(ws, r, 1, '', T); xlPut(ws, r, 2, '', T);
+  xlPut(ws, r, 3, tot.shop, {...T, numFmt:XL.numFmt}, 'n');
+  xlPut(ws, r, 4, tot.ini, {...T, numFmt:XL.numFmt}, 'n');
+  if(tot.shop>0) xlPut(ws, r, 5, tot.ini/tot.shop, {...T, numFmt:XL.shareFmt, alignment:{horizontal:'center', vertical:'center'}}, 'n');
+  else xlPut(ws, r, 5, '', T);
+  xlPut(ws, r, 6, tot.anyLalu ? tot.lalu : '—', tot.anyLalu ? {...T, numFmt:XL.numFmt} : T, tot.anyLalu ? 'n' : 's');
+  xlPut(ws, r, 7, '', T); xlPut(ws, r, 8, '', T);
+  ws['!ref'] = XLSX.utils.encode_range({s:{r:0,c:0}, e:{r, c:W-1}});
+  ws['!merges'] = [{s:{r:0,c:0}, e:{r:0,c:W-1}}, {s:{r:1,c:0}, e:{r:1,c:W-1}}];
+  ws['!cols'] = [{wch:20},{wch:26},{wch:26},{wch:20},{wch:20},{wch:14},{wch:20},{wch:14},{wch:46}];
+  ws['!rows'] = [{hpt:24},{hpt:16},{hpt:8},{hpt:30}];
+  return ws;
+}
+
+function buildProductsShopSheet(c, label){
+  const ws = {};
+  const header = ['Rank', 'Nama Produk / Motif', 'No ID Produk', 'Terjual (pcs)',
+                  `GMV ${label} Ini (Rp)`, `GMV ${label} Lalu (Rp)`, 'Growth GMV'];
+  const W = header.length;
+  xlPut(ws, 0, 0, c.shop, XL.title);
+  xlPut(ws, 1, 0, `Top ${TOP_PRODUCTS_N} Produk TikTok · GMV ${label} · Periode Ini: ${c.periodIni || '—'} · Periode Lalu: ${c.has2 ? c.periodLalu : 'belum ada file'}`, XL.sub);
+  header.forEach((h,ci)=> xlPut(ws, 3, ci, h, XL.head));
+  let r = 4;
+  if(!c.top.length){
+    xlPut(ws, r, 0, `Belum ada produk dengan GMV ${label} di periode ini.`, XL.cell({font:{italic:true, color:{rgb:'64748B'}}}));
+    for(let ci=1; ci<W; ci++) xlPut(ws, r, ci, '', XL.cell());
+    ws['!merges'] = [{s:{r,c:0}, e:{r,c:W-1}}];
+    r++;
+  }
+  let sumPcs = 0, sumIni = 0, sumLalu = 0;
+  c.top.forEach((p,i)=>{
+    const z = i%2 ? XL.zebra : undefined;
+    sumPcs += p.pcsIni||0; sumIni += p.gmvIni||0; sumLalu += p.gmvLalu||0;
+    xlPut(ws, r, 0, i+1, XL.cell({alignment:{horizontal:'center'}, font:{bold:i<3}, fill:z}), 'n');
+    xlPut(ws, r, 1, shortProductName(p.name), XL.cell({fill:z, alignment:{wrapText:true}}));
+    xlPut(ws, r, 2, String(p.id||''), XL.cell({numFmt:'@', fill:z}), 's');
+    xlPut(ws, r, 3, p.pcsIni||0, XL.cell({numFmt:XL.numFmt, alignment:{horizontal:'center'}, fill:z}), 'n');
+    xlPut(ws, r, 4, p.gmvIni||0, XL.cell({numFmt:XL.numFmt, fill:z}), 'n');
+    if(c.has2) xlPut(ws, r, 5, p.gmvLalu||0, XL.cell({numFmt:XL.numFmt, fill:z}), 'n');
+    else xlPut(ws, r, 5, '—', XL.cell({alignment:{horizontal:'center'}, fill:z}));
+    xlGrowthCell(ws, r, 6, p.gmvIni, p.gmvLalu, c.has2, z);
+    r++;
+  });
+  if(c.top.length){
+    const T = XL.cell({font:{bold:true}, fill:XL.total});
+    xlPut(ws, r, 0, '', T);
+    xlPut(ws, r, 1, `Total Top ${c.top.length}`, T);
+    xlPut(ws, r, 2, '', T);
+    xlPut(ws, r, 3, sumPcs, {...T, numFmt:XL.numFmt, alignment:{horizontal:'center', vertical:'center'}}, 'n');
+    xlPut(ws, r, 4, sumIni, {...T, numFmt:XL.numFmt}, 'n');
+    xlPut(ws, r, 5, c.has2 ? sumLalu : '—', c.has2 ? {...T, numFmt:XL.numFmt} : T, c.has2 ? 'n' : 's');
+    xlGrowthCell(ws, r, 6, sumIni, sumLalu, c.has2, XL.total);
+    r++;
+    const share = c.shopGmv>0 ? (sumIni/c.shopGmv*100).toFixed(1).replace('.',',')+'%' : '—';
+    xlPut(ws, r+1, 0, `Top ${c.top.length} menyumbang ${share} dari total GMV ${label} toko (${c.top.length} dari ${c.productCount} produk ber-GMV).`, XL.sub);
+    r += 2;
+  }
+  ws['!ref'] = XLSX.utils.encode_range({s:{r:0,c:0}, e:{r:Math.max(r-1,4), c:W-1}});
+  ws['!merges'] = [...(ws['!merges']||[]), {s:{r:0,c:0}, e:{r:0,c:W-1}}, {s:{r:1,c:0}, e:{r:1,c:W-1}}];
+  ws['!cols'] = [{wch:7},{wch:48},{wch:22},{wch:13},{wch:19},{wch:19},{wch:13}];
+  ws['!rows'] = [{hpt:24},{hpt:16},{hpt:8},{hpt:30}];
+  return ws;
+}
+
 function downloadProductsXLSX(){
-  const aoa = buildProductsAOA();
-  if(aoa.length<=1){ alert('Belum ada data produk TikTok untuk didownload.'); return; }
-  const ws = XLSX.utils.aoa_to_sheet(aoa);
-  ws['!cols'] = [{wch:16},{wch:24},{wch:24},{wch:6},{wch:70},{wch:22},{wch:13},{wch:18},{wch:18},{wch:14}];
+  const {cards, label} = productCardsCache;
+  if(!cards.length){ alert('Belum ada data produk TikTok untuk didownload.'); return; }
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, `Top Produk ${productCardsCache.label}`);
-  XLSX.writeFile(wb, `top-produk-tiktok-${productCardsCache.label.toLowerCase()}-${new Date().toISOString().slice(0,10)}.xlsx`);
+  const used = new Set();
+  XLSX.utils.book_append_sheet(wb, buildProductsSummarySheet(cards, label), xlSheetName('Ringkasan', used));
+  cards.forEach(c=> XLSX.utils.book_append_sheet(wb, buildProductsShopSheet(c, label), xlSheetName(c.shop, used)));
+  XLSX.writeFile(wb, `top-produk-tiktok-${label.toLowerCase()}-${new Date().toISOString().slice(0,10)}.xlsx`);
+  showToast(`Excel siap: ${cards.length} toko, 1 sheet per toko + Ringkasan`);
+}
+
+function renderProductsMenu(){
+  const menu = document.getElementById('productsMenu');
+  if(!menu) return;
+  const {cards, label} = productCardsCache;
+  if(!cards.length){
+    menu.innerHTML = `<div class="dl-group" style="text-transform:none; letter-spacing:0;">Upload file TikTok dulu</div>`;
+    return;
+  }
+  menu.innerHTML = `
+    <button class="dl-item" role="menuitem" data-action="prod-xlsx">Excel <small>1 sheet per toko</small></button>
+    <button class="dl-item" role="menuitem" data-action="prod-csv">CSV <small>semua toko digabung</small></button>
+    <div class="dl-sep"></div>
+    <button class="dl-item" role="menuitem" data-action="prod-png-all">PNG HD semua toko <small>1 gambar</small></button>
+    <div class="dl-group">PNG HD per toko · ${label}</div>
+    ${cards.map((c,i)=> `<button class="dl-item" role="menuitem" data-action="prod-png" data-idx="${i}">${escapeHtml(c.shop)} <small>PNG</small></button>`).join('')}`;
 }
 
 function safeFileName(s){
@@ -1112,22 +1380,19 @@ function renderCharts(){
 
   wrap.innerHTML = `
     <div class="chart-block" data-chart="gmv">
-      <div class="chart-block-head"><div class="chart-title">GMV (Rp)</div><button class="chart-dl-btn" data-dl="gmv">⬇ PNG</button></div>
+      <div class="chart-block-head"><div class="chart-title">GMV (Rp)</div></div>
       <div class="chart-scroll">${gmvSVG}</div>
     </div>
     <div class="chart-block" data-chart="ctr">
-      <div class="chart-block-head"><div class="chart-title">CTR (%)</div><button class="chart-dl-btn" data-dl="ctr">⬇ PNG</button></div>
+      <div class="chart-block-head"><div class="chart-title">CTR (%)</div></div>
       <div class="chart-scroll">${ctrSVG}</div>
     </div>
     <div class="chart-block" data-chart="pcs">
-      <div class="chart-block-head"><div class="chart-title">Produk Terjual (PCS)</div><button class="chart-dl-btn" data-dl="pcs">⬇ PNG</button></div>
+      <div class="chart-block-head"><div class="chart-title">Produk Terjual (PCS)</div></div>
       <div class="chart-scroll">${pcsSVG}</div>
     </div>
   `;
 
-  wrap.querySelectorAll('.chart-dl-btn').forEach(btn=>{
-    btn.addEventListener('click', ()=> downloadSingleChart(btn.dataset.dl));
-  });
 }
 
 // ============================================================
@@ -1256,21 +1521,20 @@ function renderChips(){
       ? `Shopee · ${f.channel==='live'?'Live':'Video'}`
       : `TikTok · Live+Video internal`;
 
-    let shopControl = '';
-    if(needsShop){
-      shopControl = `<select onchange="assignShop(${f.id}, this.value)">
-        <option value="">Pilih toko…</option>
-        ${KNOWN_SHOPS.map(s=>`<option value="${s}">${s}</option>`).join('')}
+    // Selalu dropdown: toko yang salah terdeteksi bisa langsung diganti
+    const srcText = {id:'dari User Id', file:'dari nama file', produk:'dari nama produk', manual:'dipilih manual'}[f.shopSource] || '';
+    const shopControl = `<select class="${needsShop?'':'set'}" onchange="assignShop(${f.id}, this.value)" title="Ganti toko">
+        ${needsShop ? '<option value="">Pilih toko…</option>' : ''}
+        ${KNOWN_SHOPS.map(s=>`<option value="${escapeHtml(s)}"${s===f.shop?' selected':''}>${escapeHtml(s)}</option>`).join('')}
+        <option value="__new__">+ Toko baru…</option>
       </select>`;
-    } else {
-      shopControl = `<span class="tag">${f.shop}</span>`;
-    }
 
     chip.innerHTML = `
       <span class="platform-badge ${badgeClass}">${badgeLetter}</span>
       <div class="meta">
         <div style="display:flex; align-items:center; gap:6px;">${shopControl}<span style="color:var(--muted)">· ${tagText}</span></div>
-        <span class="fname">${f.fileName} — ${f.periodLabel}</span>
+        <span class="fname" title="${escapeHtml(f.fileName)}">${escapeHtml(f.fileName)} — ${escapeHtml(f.periodLabel)}</span>
+        ${srcText ? `<span class="src">Toko ${srcText}</span>` : ''}
       </div>
       <button class="x" onclick="removeFile(${f.id})" aria-label="Hapus">✕</button>
     `;
@@ -1278,7 +1542,10 @@ function renderChips(){
   });
 
   const total = uploaded.length;
-  note.textContent = `${total} file terupload. File dengan border oranye butuh toko dikonfirmasi manual.`;
+  const missing = uploaded.filter(f=>!f.shop).length;
+  note.textContent = missing
+    ? `${total} file terupload · ${missing} file belum ada tokonya (border oranye). Pilih sekali saja — pilihan diingat untuk upload berikutnya.`
+    : `${total} file terupload · semua toko terdeteksi. Toko yang salah bisa diganti lewat dropdown di tiap file.`;
 }
 
 function renderTable(){
@@ -1583,25 +1850,66 @@ document.querySelectorAll('.tab').forEach(tab=>{
   });
 });
 
-document.getElementById('downloadCsvBtn').addEventListener('click', downloadCSV);
-document.getElementById('downloadXlsxBtn').addEventListener('click', downloadXLSX);
-document.getElementById('downloadAllChartsBtn').addEventListener('click', downloadAllCharts);
-document.getElementById('downloadProductsBtn').addEventListener('click', ()=> downloadProductsPNG());
-document.getElementById('downloadProductsCsvBtn').addEventListener('click', downloadProductsCSV);
-document.getElementById('downloadProductsXlsxBtn').addEventListener('click', downloadProductsXLSX);
+let toastTimer = null;
+function showToast(msg){
+  const t = document.getElementById('toast');
+  if(!t) return;
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=> t.classList.remove('show'), 2200);
+}
 
-document.getElementById('copyBtn').addEventListener('click', async ()=>{
+async function copyTableMarkdown(){
   const md = tableToMarkdown();
   try{
     await navigator.clipboard.writeText(md);
-    const btn = document.getElementById('copyBtn');
-    const original = btn.textContent;
-    btn.textContent = 'Tersalin ✓';
-    setTimeout(()=> btn.textContent = original, 1500);
+    showToast('Tabel tersalin sebagai Markdown ✓');
   }catch(e){
     alert('Gagal menyalin otomatis. Markdown:\n\n'+md);
   }
+}
+
+const DL_ACTIONS = {
+  'table-xlsx': ()=> downloadXLSX(),
+  'table-csv': ()=> downloadCSV(),
+  'table-md': ()=> copyTableMarkdown(),
+  'prod-xlsx': ()=> downloadProductsXLSX(),
+  'prod-csv': ()=> downloadProductsCSV(),
+  'prod-png-all': ()=> downloadProductsPNG(),
+  'prod-png': (el)=> downloadProductsPNG(Number(el.dataset.idx)),
+  'chart-all': ()=> downloadAllCharts(),
+  'chart-gmv': ()=> downloadSingleChart('gmv'),
+  'chart-ctr': ()=> downloadSingleChart('ctr'),
+  'chart-pcs': ()=> downloadSingleChart('pcs'),
+};
+function closeMenus(except){
+  document.querySelectorAll('.dl-menu.open').forEach(m=>{
+    if(m===except) return;
+    m.classList.remove('open');
+    const b = m.querySelector('.dl-toggle'); if(b) b.setAttribute('aria-expanded','false');
+  });
+}
+document.addEventListener('click', (e)=>{
+  const toggle = e.target.closest('.dl-toggle');
+  if(toggle){
+    const menu = toggle.closest('.dl-menu');
+    const willOpen = !menu.classList.contains('open');
+    closeMenus(menu);
+    menu.classList.toggle('open', willOpen);
+    toggle.setAttribute('aria-expanded', String(willOpen));
+    return;
+  }
+  const item = e.target.closest('.dl-item');
+  if(item){
+    closeMenus();
+    const fn = DL_ACTIONS[item.dataset.action];
+    if(fn) fn(item);
+    return;
+  }
+  if(!e.target.closest('.dl-pop')) closeMenus();
 });
+document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closeMenus(); });
 // init
 loadUserMap().then(render);
 render();
