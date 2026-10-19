@@ -291,10 +291,11 @@ tr.total td{font-weight:700; background:var(--primary-soft) !important; border-t
   </div>
 
   <div class="card" id="productsCard">
-    <div class="toolbar" style="margin-top:0; margin-bottom:14px;">
+    <div class="toolbar" style="margin-top:0; margin-bottom:6px;">
       <span class="note" id="productsTitle" style="margin:0;"></span>
-      <span class="note" style="margin:0;">Hanya produk dengan GMV &gt; 0 · Ini vs Lalu dicocokkan lewat ID Produk</span>
+      <button class="btn primary" id="downloadProductsBtn">⬇ Download Semua (PNG HD)</button>
     </div>
+    <div class="note" style="margin:0 0 14px;">Hanya produk dengan GMV &gt; 0 · Ini vs Lalu dicocokkan lewat ID Produk</div>
     <div id="productsWrap"></div>
   </div>
 
@@ -688,11 +689,14 @@ function buildTopProducts(channelKey){
       };
     });
 
+    const cleanPeriod = (s)=> String(s||'').replace(/^Tanggal analisis:\s*/i,'').trim();
     cards.push({
       shop: ini.shop || 'Belum diketahui',
       top, productCount: withGmv.length,
       shopGmv: ini.channels[channelKey].gmv,
       has2,
+      periodIni: cleanPeriod(ini.periodLabel),
+      periodLalu: lalu ? cleanPeriod(lalu.periodLabel) : '',
     });
   });
 
@@ -700,7 +704,7 @@ function buildTopProducts(channelKey){
   return cards;
 }
 
-function renderProductCard(c, label){
+function renderProductCard(c, label, idx){
   const rp = (n)=> 'Rp '+fmtInt(n);
   const maxGmv = c.top.length ? c.top[0].gmvIni : 0;
   const topSum = c.top.reduce((s,p)=> s+p.gmvIni, 0);
@@ -709,7 +713,10 @@ function renderProductCard(c, label){
   const head = `
     <div class="pcard-head">
       <div class="pcard-shop"><span class="platform-label tiktok">TikTok</span>${escapeHtml(c.shop)}</div>
-      ${c.top.length && share!==null ? `<div class="pcard-share">Top ${c.top.length} = ${share.toFixed(1).replace('.',',')}% dari GMV ${label}</div>` : ''}
+      <div style="display:flex; align-items:center; gap:10px;">
+        ${c.top.length && share!==null ? `<div class="pcard-share">Top ${c.top.length} = ${share.toFixed(1).replace('.',',')}% dari GMV ${label}</div>` : ''}
+        <button class="chart-dl-btn" data-product-dl="${idx}" title="Download kartu ${escapeHtml(c.shop)} sebagai PNG HD">⬇ PNG</button>
+      </div>
     </div>`;
 
   if(c.top.length===0){
@@ -750,11 +757,183 @@ function renderTopProducts(){
   title.innerHTML = `Top ${TOP_PRODUCTS_N} produk <b>TikTok</b> per toko — GMV <b>${label}</b>`;
 
   const cards = buildTopProducts(activeTab);
+  productCardsCache = {cards, label};
   if(cards.length===0){
     wrap.innerHTML = `<div class="empty-state"><div class="empty-icon">🛍️</div>Upload file product list TikTok (.xlsx) untuk melihat produk dengan GMV tertinggi per toko.</div>`;
     return;
   }
-  wrap.innerHTML = `<div class="pgrid">${cards.map(c=> renderProductCard(c, label)).join('')}</div>`;
+  wrap.innerHTML = `<div class="pgrid">${cards.map((c,i)=> renderProductCard(c, label, i)).join('')}</div>`;
+  wrap.querySelectorAll('[data-product-dl]').forEach(btn=>{
+    btn.addEventListener('click', ()=> downloadProductsPNG(Number(btn.dataset.productDl)));
+  });
+}
+
+// ============================================================
+// EXPORT PNG HD — Top 10 produk TikTok
+// Format tabel: Rank | Nama Produk | No ID Produk | Terjual | GMV Ini | GMV Lalu | Growth.
+// Digambar langsung ke canvas (bukan screenshot HTML) supaya tajam dan
+// tampilannya tidak bergantung pada CSS halaman.
+// ============================================================
+let productCardsCache = {cards:[], label:'Live'};
+
+// Nama produk dipersingkat: awalan sebelum kata "Motif" dibuang (jika ada)
+function shortProductName(name){
+  const s = String(name||'').trim();
+  const m = s.search(/\bMotif\b/i);
+  return m>0 ? s.slice(m).trim() : s;
+}
+
+function drawProductsToCanvas(cards, label){
+  const F = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
+  const COL = {ink:'#0F172A', muted:'#64748B', line:'#CBD5D1', zebra:'#F4F8F5', white:'#FFFFFF',
+               head:'#1B4332', headText:'#FFFFFF',
+               up:'#059669', down:'#DC2626', neu:'#D97706'};
+  const rp = (n)=> 'Rp'+fmtInt(n);
+
+  // kolom: Rank | Nama Produk / Motif | No ID Produk | Terjual (pcs) | GMV Ini | GMV Lalu | Growth GMV
+  const colDefs = [
+    {k:'rank',  t:'Rank',                  w:64,  a:'center'},
+    {k:'name',  t:'Nama Produk / Motif',   w:430, a:'left'},
+    {k:'id',    t:'No ID Produk',          w:190, a:'center'},
+    {k:'pcs',   t:'Terjual (pcs)',         w:110, a:'center'},
+    {k:'ini',   t:'GMV Ini (Rp)',          w:140, a:'right'},
+    {k:'lalu',  t:'GMV Lalu (Rp)',         w:140, a:'right'},
+    {k:'gr',    t:'Growth GMV',            w:120, a:'center'},
+  ];
+  const tableW = colDefs.reduce((s,c)=>s+c.w,0);
+  const outer = 24, titleH = 44, headH = 40, rowH = 50, gap = 30;
+
+  const tableH = (c)=> titleH + headH + Math.max(1, c.top.length)*rowH;
+  const W = outer*2 + tableW;
+  const H = outer*2 + cards.reduce((s,c)=>s+tableH(c),0) + (cards.length-1)*gap;
+
+  // skala HD: 3x, dibatasi luas canvas (HP lebih kecil dari komputer)
+  const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  const maxPixels = isMobile ? 14000000 : 40000000;
+  const scale = Math.max(1, Math.min(3, Math.sqrt(maxPixels/(W*H))));
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.round(W*scale);
+  canvas.height = Math.round(H*scale);
+  const ctx = canvas.getContext('2d');
+  ctx.scale(scale, scale);
+  ctx.textBaseline = 'alphabetic';
+
+  const font = (weight,size)=> { ctx.font = `${weight} ${size}px ${F}`; };
+  const fitText = (text, maxW)=>{
+    if(ctx.measureText(text).width <= maxW) return text;
+    let t = text;
+    while(t.length>1 && ctx.measureText(t+'…').width > maxW) t = t.slice(0,-1);
+    return t.trimEnd()+'…';
+  };
+  const wrap2 = (text, maxW)=>{
+    const words = text.split(' ');
+    let line1 = '', i = 0;
+    for(; i<words.length; i++){
+      const t = line1 ? line1+' '+words[i] : words[i];
+      if(ctx.measureText(t).width > maxW && line1) break;
+      line1 = t;
+    }
+    const rest = words.slice(i).join(' ');
+    return [fitText(line1, maxW), rest ? fitText(rest, maxW) : ''];
+  };
+  const cellText = (txt, col, x, w, y)=>{
+    ctx.textAlign = col.a;
+    const tx = col.a==='left' ? x+12 : col.a==='right' ? x+w-12 : x+w/2;
+    ctx.fillText(txt, tx, y);
+    ctx.textAlign = 'left';
+  };
+
+  ctx.fillStyle = COL.white; ctx.fillRect(0,0,W,H);
+
+  let y0 = outer;
+  cards.forEach(c=>{
+    const x0 = outer;
+    // judul: hanya nama toko
+    ctx.fillStyle = COL.ink; font(700,22);
+    ctx.fillText(fitText(c.shop, tableW), x0, y0+28);
+    let y = y0 + titleH;
+
+    // header
+    ctx.fillStyle = COL.head; ctx.fillRect(x0, y, tableW, headH);
+    ctx.fillStyle = COL.headText; font(700,13);
+    let x = x0;
+    colDefs.forEach(col=>{ cellText(col.t, col, x, col.w, y+headH/2+5); x += col.w; });
+    y += headH;
+
+    if(c.top.length===0){
+      ctx.fillStyle = COL.muted; font(400,14);
+      ctx.fillText(`Belum ada produk dengan GMV ${label} di periode ini.`, x0+12, y+rowH/2+5);
+      ctx.strokeStyle = COL.line; ctx.lineWidth = 1; ctx.strokeRect(x0+.5, y0+titleH+.5, tableW-1, headH+rowH-1);
+      y0 += tableH(c) + gap;
+      return;
+    }
+
+    c.top.forEach((p,i)=>{
+      const ry = y + i*rowH;
+      ctx.fillStyle = i%2 ? COL.zebra : COL.white; ctx.fillRect(x0, ry, tableW, rowH);
+      let cx = x0;
+      const mid = ry + rowH/2;
+      colDefs.forEach(col=>{
+        if(col.k==='rank'){ ctx.fillStyle = COL.ink; font(700,14); cellText(String(i+1), col, cx, col.w, mid+5); }
+        else if(col.k==='name'){
+          ctx.fillStyle = COL.ink; font(600,13);
+          const [l1,l2] = wrap2(shortProductName(p.name), col.w-24);
+          if(l2){ cellText(l1, col, cx, col.w, mid-3); cellText(l2, col, cx, col.w, mid+13); }
+          else cellText(l1, col, cx, col.w, mid+5);
+        }
+        else if(col.k==='id'){ ctx.fillStyle = COL.ink; font(500,13); cellText(String(p.id||'-'), col, cx, col.w, mid+5); }
+        else if(col.k==='pcs'){ ctx.fillStyle = COL.ink; font(500,14); cellText(fmtInt(p.pcsIni), col, cx, col.w, mid+5); }
+        else if(col.k==='ini'){ ctx.fillStyle = COL.ink; font(700,14); cellText(rp(p.gmvIni), col, cx, col.w, mid+5); }
+        else if(col.k==='lalu'){
+          ctx.fillStyle = COL.ink; font(500,14);
+          cellText(c.has2 ? rp(p.gmvLalu) : '—', col, cx, col.w, mid+5);
+        }
+        else if(col.k==='gr'){
+          let txt='—', bg=null;
+          if(c.has2){
+            if(p.gmvLalu>0){
+              const g = growth(p.gmvIni, p.gmvLalu), up = g>=0;
+              txt = `${up?'▲':'▼'} ${Math.abs(g).toFixed(2).replace('.',',')}%`; bg = up?COL.up:COL.down;
+            } else { txt='Baru'; bg=COL.neu; }
+          }
+          if(bg){ ctx.fillStyle = bg; ctx.fillRect(cx, ry, col.w, rowH); ctx.fillStyle = '#FFFFFF'; }
+          else ctx.fillStyle = COL.muted;
+          font(700,14); cellText(txt, col, cx, col.w, mid+5);
+        }
+        cx += col.w;
+      });
+    });
+
+    // garis tabel
+    const top = y0+titleH, bottom = y + c.top.length*rowH;
+    ctx.strokeStyle = COL.line; ctx.lineWidth = 1;
+    ctx.beginPath();
+    for(let i=0;i<=c.top.length;i++){ const ly = Math.round(y+i*rowH)+.5; ctx.moveTo(x0, ly); ctx.lineTo(x0+tableW, ly); }
+    let vx = x0;
+    for(let i=0;i<=colDefs.length;i++){ const lx = Math.round(vx)+.5; ctx.moveTo(lx, top); ctx.lineTo(lx, bottom); if(i<colDefs.length) vx += colDefs[i].w; }
+    ctx.stroke();
+    // garis putih tipis di antara sel growth agar warna penuh tetap terbaca per baris
+    y0 += tableH(c) + gap;
+  });
+  return canvas;
+}
+
+function safeFileName(s){
+  return String(s||'toko').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'') || 'toko';
+}
+
+function downloadProductsPNG(idx){
+  const {cards, label} = productCardsCache;
+  if(!cards.length){ alert('Belum ada data produk TikTok untuk didownload.'); return; }
+  const single = Number.isInteger(idx);
+  const chosen = single ? [cards[idx]] : cards;
+  if(single && !cards[idx]) return;
+  const canvas = drawProductsToCanvas(chosen, label);
+  const date = new Date().toISOString().slice(0,10);
+  const name = single
+    ? `top-produk-tiktok-${safeFileName(cards[idx].shop)}-${label.toLowerCase()}-${date}.png`
+    : `top-produk-tiktok-semua-${label.toLowerCase()}-${date}.png`;
+  canvas.toBlob(blob=>{ if(blob) triggerBlobDownload(blob, name); }, 'image/png');
 }
 
 // ============================================================
@@ -1370,6 +1549,7 @@ document.querySelectorAll('.tab').forEach(tab=>{
 document.getElementById('downloadCsvBtn').addEventListener('click', downloadCSV);
 document.getElementById('downloadXlsxBtn').addEventListener('click', downloadXLSX);
 document.getElementById('downloadAllChartsBtn').addEventListener('click', downloadAllCharts);
+document.getElementById('downloadProductsBtn').addEventListener('click', ()=> downloadProductsPNG());
 
 document.getElementById('copyBtn').addEventListener('click', async ()=>{
   const md = tableToMarkdown();
