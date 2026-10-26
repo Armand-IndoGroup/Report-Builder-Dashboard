@@ -557,22 +557,14 @@ async function saveUserMap(){
 
 // ============================================================
 // LABEL LAPORAN — Mingguan/Bulanan + label periode yang bisa diganti.
-// Disimpan di browser per mode, jadi bisa bolak-balik weekly <-> monthly.
+// Hanya diingat selama halaman terbuka (bisa bolak-balik weekly <-> monthly);
+// setiap refresh / dibuka orang lain kembali ke default: Mingguan, Ini/Lalu.
 // ============================================================
-const LS_LABELS = 'rb-period-labels-v1';
+const LS_LABELS = 'rb-period-labels-v1'; // kunci lama, dihapus saat halaman dibuka
 const MONTHS_ID = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
 let labelState = {mode:'weekly', weekly:{cur:'', prev:''}, monthly:{cur:'', prev:''}};
-(function loadLabels(){
-  const saved = lsGet(LS_LABELS, null);
-  if(!saved || typeof saved!=='object') return;
-  if(saved.mode==='weekly' || saved.mode==='monthly') labelState.mode = saved.mode;
-  ['weekly','monthly'].forEach(m=>{
-    if(saved[m] && typeof saved[m]==='object'){
-      labelState[m] = {cur:String(saved[m].cur||'').slice(0,18), prev:String(saved[m].prev||'').slice(0,18)};
-    }
-  });
-})();
-function saveLabels(){ lsSet(LS_LABELS, labelState); }
+try{ localStorage.removeItem(LS_LABELS); }catch(e){} // bersihkan label lama yang sempat tersimpan
+function saveLabels(){ /* sengaja tidak disimpan: label kembali ke default setelah refresh */ }
 
 // Label otomatis bila kolom dikosongkan: Mingguan = Ini/Lalu, Bulanan = nama bulan dari tanggal file
 function autoLabels(){
