@@ -445,6 +445,7 @@ header.top .brand-logo{display:none;}
 .tab.active{background:var(--navy); color:var(--gold); border:none;}
 .tab.active .count{background:var(--gold); color:var(--navy);}
 
+.sec-actions{display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
 /* KPI */
 .kpi{display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:16px;}
 .k{padding:18px 18px 16px; position:relative; min-width:0;}
@@ -638,9 +639,17 @@ header.top .brand-logo{display:none;}
         <h2 class="sec-title" id="kpiTitle">Gambaran minggu ini</h2>
       </div>
     </div>
+    <div class="sec-actions">
     <div class="tabs" id="tabs" role="tablist" aria-label="Channel">
       <button type="button" class="tab active" data-tab="live" role="tab" aria-selected="true">Live <span class="count" id="cnt-live">0</span></button>
       <button type="button" class="tab" data-tab="video" role="tab" aria-selected="false">Video <span class="count" id="cnt-video">0</span></button>
+    </div>
+    <div class="dl-menu">
+      <button class="btn primary dl-toggle" aria-haspopup="true" aria-expanded="false">⬇ Download</button>
+      <div class="dl-pop" role="menu">
+        <button class="dl-item" role="menuitem" data-action="kpi-png">Gambar KPI <small>PNG 16:9 · slide</small></button>
+      </div>
+    </div>
     </div>
   </div>
 
@@ -2364,12 +2373,14 @@ function renderKPI(){
   const rows = buildChannelRows(activeTab);
   if(!rows.length){
     wrap.innerHTML = `<div class="card glass"><div class="empty-state"><div class="empty-icon">📈</div>Upload file untuk melihat ringkasan KPI ${chLabel}.</div></div>`;
+    kpiCache = null;
     return;
   }
   const sum = (k)=> rows.reduce((s,r)=> s + (r[k]||0), 0);
   const gmvIni = sum('gmvIni'), gmvLalu = sum('gmvLalu');
   if(!gmvIni && !gmvLalu){
     wrap.innerHTML = `<div class="card glass"><div class="empty-state"><div class="empty-icon">📈</div>Belum ada GMV ${chLabel} di file yang diupload.</div></div>`;
+    kpiCache = null;
     return;
   }
   const pcsIni = sum('produkIni'), pcsLalu = sum('produkLalu');
@@ -2450,6 +2461,8 @@ function renderKPI(){
     ${missing && compared.length ? `<div class="kempty" style="padding:10px 0 0">${missing} toko belum punya data pembanding.</div>` : ''}</div>`;
 
   wrap.innerHTML = kpiHtml + `<div class="kpi-row">${donutCard}${shareCard}${updown}</div>`;
+  kpiCache = {chLabel, cur:l.cur, prev:l.prev, gmvIni, gmvLalu, gG, anyLalu, best, gBest, pcsIni, pcsLalu, gP,
+    ctrIni, ctrLalu, ctrDiff, ctrFlat, shareS, shareT, pl, sorted, ups, downs, compared, missing};
 }
 
 // ============================================================
@@ -2500,6 +2513,257 @@ function renderKPI(){
   });
 })();
 
+
+// ============================================================
+// GAMBAR KPI — PNG 16:9 (1920x1080, dirender 2x) untuk ditempel ke slide
+// Digambar ulang di canvas (bukan screenshot) supaya tajam & konsisten
+// ============================================================
+let kpiCache = null;
+
+// tanggal periode Ini/Lalu dari file yang dipakai tab aktif
+function kpiPeriodText(){
+  const groups = {};
+  uploaded.forEach(f=>{
+    if(f.platform==='Shopee' && f.channel!==activeTab) return;
+    const k = f.platform + '|' + (f.shop||f.fileName);
+    (groups[k] = groups[k] || []).push(f);
+  });
+  // samakan format tanggal Shopee (12-10-2026) & TikTok (12/10/2026) -> "12/10/2026 – 18/10/2026"
+  const cleanPeriod = (label)=>{
+    const ds = String(label||'').match(/\d{1,2}[\/-]\d{1,2}[\/-]\d{4}/g);
+    if(!ds || !ds.length) return String(label||'').replace(/^Tanggal analisis:\s*/i,'').trim();
+    const f = (d)=>{ const [dd,mm,yy] = d.split(/[\/-]/); return `${dd.padStart(2,'0')}/${mm.padStart(2,'0')}/${yy}`; };
+    return ds.length>1 ? `${f(ds[0])} – ${f(ds[ds.length-1])}` : f(ds[0]);
+  };
+  const ini = new Set(), lalu = new Set();
+  Object.values(groups).forEach(fs=>{
+    fs.sort((a,b)=> a.periodStart.localeCompare(b.periodStart));
+    ini.add(cleanPeriod(fs[fs.length-1].periodLabel));
+    if(fs.length>1) lalu.add(cleanPeriod(fs[0].periodLabel));
+  });
+  const one = (set)=> set.size===1 ? [...set][0] : (set.size ? 'beberapa periode' : '');
+  const l = L();
+  const parts = [];
+  if(ini.size) parts.push(`${l.cur}: ${one(ini)}`);
+  if(lalu.size) parts.push(`${l.prev}: ${one(lalu)}`);
+  return parts.join('   ·   ');
+}
+
+const KPI_ICON_PATHS = {
+  money:'M3 7h18v10H3zM12 9.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM6 10v4M18 10v4',
+  crown:'M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5z',
+  box:'M21 8l-9-5-9 5 9 5 9-5zM3 8v8l9 5 9-5V8M12 13v8',
+  click:'M9 3v3M3 9h3M5 5l2 2M12 11l8 3-3.5 1.5L15 19z',
+  up:'M7 17L17 7M9 7h8v8', down:'M7 7l10 10M17 9v8H9', dash:'M6 12h12',
+};
+
+function drawKPIImage(){
+  const K = kpiCache;
+  const W = 1920, H = 1080, SCALE = 2, M = 64;
+  const C = {ink:'#0B1D26', muted:'#5B6B73', line:'#E6E1D6', card:'#FAF8F3', navy:'#0B1D26', gold:'#E3C46A', goldL:'#FBD784',
+             up:'#2F7A55', upBg:'#E3F1E9', down:'#B0413E', downBg:'#F8E4E2', naBg:'#EEF0F1', track:'#ECE8DF',
+             shopee:'#EE4D2D', tiktok:'#111111'};
+  const SANS = '-apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
+  const SERIF = '"Playfair Display", Georgia, "Times New Roman", serif';
+  const cv = document.createElement('canvas');
+  cv.width = W*SCALE; cv.height = H*SCALE;
+  const ctx = cv.getContext('2d');
+  ctx.scale(SCALE, SCALE);
+  ctx.textBaseline = 'alphabetic';
+  ctx.fillStyle = '#FFFFFF'; ctx.fillRect(0, 0, W, H);
+
+  const font = (w, sz, fam=SANS)=> ctx.font = `${w} ${sz}px ${fam}`;
+  const spacing = (px)=> { try{ ctx.letterSpacing = px+'px'; }catch(e){} };
+  const rrect = (x,y,w,h,r)=>{ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); };
+  const card = (x,y,w,h)=>{ rrect(x,y,w,h,20); ctx.fillStyle = C.card; ctx.fill(); ctx.strokeStyle = C.line; ctx.lineWidth = 1.5; ctx.stroke(); };
+  const fit = (t, maxW)=>{ t = String(t); if(ctx.measureText(t).width<=maxW) return t; while(t.length>1 && ctx.measureText(t+'…').width>maxW) t = t.slice(0,-1); return t+'…'; };
+  const icon = (name, x, y, size, color, lw=2)=>{
+    ctx.save(); ctx.translate(x, y); ctx.scale(size/24, size/24);
+    ctx.strokeStyle = color; ctx.lineWidth = lw; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.stroke(new Path2D(KPI_ICON_PATHS[name])); ctx.restore();
+  };
+  const fmt1 = (n)=> n.toFixed(1).replace('.',',');
+  // pil growth; kembalikan lebarnya
+  const pill = (x, yMid, g, txtOverride)=>{
+    let txt, fg, bg;
+    if(txtOverride){ txt = txtOverride.t; fg = txtOverride.fg; bg = txtOverride.bg; }
+    else if(g===null||g===undefined||!isFinite(g)){ txt = '—'; fg = C.muted; bg = C.naBg; }
+    else { txt = `${g>=0?'▲':'▼'} ${fmt1(Math.abs(g))}%`; fg = g>=0?C.up:C.down; bg = g>=0?C.upBg:C.downBg; }
+    font(800, 17); spacing(0);
+    const w = ctx.measureText(txt).width + 26, h = 32;
+    rrect(x, yMid-h/2, w, h, 16); ctx.fillStyle = bg; ctx.fill();
+    ctx.fillStyle = fg; ctx.textBaseline = 'middle'; ctx.fillText(txt, x+13, yMid+1); ctx.textBaseline = 'alphabetic';
+    return w;
+  };
+
+  // ---- judul + tanggal ----
+  font(600, 46, SERIF); spacing(0); ctx.fillStyle = C.ink;
+  ctx.fillText(fit(`Ringkasan KPI ${K.chLabel} — ${K.cur} vs ${K.prev}`, W-2*M), M, M+44);
+  ctx.fillStyle = C.gold; ctx.fillRect(M, M+62, 52, 3);
+  font(400, 19); ctx.fillStyle = C.muted;
+  ctx.fillText(fit(kpiPeriodText(), W-2*M), M, M+100);
+
+  // ---- baris 1: 4 kartu KPI ----
+  const top1 = 200, gap = 24, cardH = 236;
+  const cw = (W - 2*M - 3*gap)/4;
+  const ctrPill = K.ctrDiff===null ? null : (K.ctrFlat ? {t:'± 0,0 poin', fg:C.muted, bg:C.naBg}
+      : {t:`${K.ctrDiff>=0?'▲':'▼'} ${fmt1(Math.abs(K.ctrDiff))} poin`, fg:K.ctrDiff>=0?C.up:C.down, bg:K.ctrDiff>=0?C.upBg:C.downBg});
+  const cards = [
+    {ic:'money', lb:`TOTAL GMV ${K.chLabel.toUpperCase()}`, v:`Rp${formatCompactRp(K.gmvIni)}`, g:K.gG,
+      sub: K.anyLalu ? `${K.prev} Rp${formatCompactRp(K.gmvLalu)}` : 'Belum ada pembanding'},
+    {ic:'crown', lb:'TOKO GMV TERTINGGI', v:K.best.shop, serif:true, g:K.gBest,
+      sub:`Rp${formatCompactRp(K.best.gmvIni)} · ${K.best.platform}`},
+    {ic:'box', lb:'PRODUK TERJUAL', v:fmtInt(K.pcsIni), unit:'pcs', g:K.gP,
+      sub: K.anyLalu ? `${K.prev} ${fmtInt(K.pcsLalu)} pcs` : 'Belum ada pembanding'},
+    {ic:'click', lb:'CTR RATA-RATA', v: K.ctrIni===null ? '—' : fmt1(K.ctrIni), unit: K.ctrIni===null ? '' : '%',
+      g: K.ctrFlat ? null : K.ctrDiff, pillOverride: ctrPill || {t:'—', fg:C.muted, bg:C.naBg},
+      sub: (K.ctrLalu!==null && K.anyLalu) ? `${K.prev} ${fmt1(K.ctrLalu)}%` : ''},
+  ];
+  cards.forEach((c, i)=>{
+    const x = M + i*(cw+gap), y = top1;
+    card(x, y, cw, cardH);
+    rrect(x+28, y+28, 46, 46, 12); ctx.fillStyle = C.navy; ctx.fill();
+    icon(c.ic, x+28+11, y+28+11, 24, C.goldL, 2.2);
+    font(700, 15); spacing(1.5); ctx.fillStyle = C.muted;
+    ctx.fillText(fit(c.lb, cw-28-46-16-28), x+28+46+16, y+58); spacing(0);
+    // panah tren
+    const trend = (c.g===null||c.g===undefined||!isFinite(c.g)) ? 'na' : (c.g>=0?'up':'down');
+    const tx = x+cw-28-30, ty = y+128;
+    ctx.beginPath(); ctx.arc(tx, ty, 30, 0, Math.PI*2);
+    ctx.fillStyle = trend==='up'?C.upBg : trend==='down'?C.downBg : C.naBg; ctx.fill();
+    icon(trend==='up'?'up':trend==='down'?'down':'dash', tx-14, ty-14, 28, trend==='up'?C.up : trend==='down'?C.down : '#93A0A6', 2.6);
+    // nilai
+    const maxV = cw - 56 - 76;
+    // nilai: ukuran huruf mengecil otomatis supaya angka panjang tetap utuh (tidak terpotong)
+    const shrink = (txt, w, startSz, minSz, fam)=>{ let sz = startSz; font(c.serif?600:800, sz, fam); while(sz>minSz && ctx.measureText(txt).width>w){ sz -= 2; font(c.serif?600:800, sz, fam); } return sz; };
+    if(c.serif){ shrink(c.v, maxV, 44, 28, SERIF); ctx.fillStyle = C.ink; ctx.fillText(fit(c.v, maxV), x+28, y+146); }
+    else {
+      shrink(c.v, maxV - (c.unit ? 50 : 0), 54, 34, SANS); ctx.fillStyle = C.ink;
+      const vt = fit(c.v, maxV - (c.unit ? 50 : 0));
+      ctx.fillText(vt, x+28, y+148);
+      if(c.unit){ const vw = ctx.measureText(vt).width; font(600, 22); ctx.fillStyle = C.muted; ctx.fillText(c.unit, x+28+vw+8, y+148); }
+    }
+    // pil + teks pembanding
+    const pw = pill(x+28, y+192, c.g, c.pillOverride);
+    font(400, 17); ctx.fillStyle = C.muted;
+    ctx.fillText(fit(c.sub, cw-28-pw-14-24), x+28+pw+14, y+198);
+  });
+
+  // ---- baris 2: donut · kontribusi · naik/turun ----
+  const top2 = top1 + cardH + gap, h2 = H - M + 8 - top2;
+  const unit = (W - 2*M - 2*gap)/3.35;
+  const w1 = unit, w2 = unit*1.35, w3 = unit;
+  const x1 = M, x2 = x1+w1+gap, x3 = x2+w2+gap;
+  const head = (x, y, t, sub)=>{
+    font(600, 27, SERIF); ctx.fillStyle = C.ink; ctx.fillText(t, x+30, y+50);
+    font(400, 16); ctx.fillStyle = C.muted; ctx.fillText(sub, x+30, y+78);
+  };
+
+  // donut
+  card(x1, top2, w1, h2);
+  head(x1, top2, 'Porsi GMV per platform', `${K.chLabel} · ${K.cur}`);
+  const dcx = x1 + w1/2, dcy = top2 + 108 + 120, R = 112, lw = 38;
+  ctx.lineWidth = lw; ctx.lineCap = 'butt';
+  ctx.beginPath(); ctx.arc(dcx, dcy, R, 0, Math.PI*2); ctx.strokeStyle = C.track; ctx.stroke();
+  const a0 = -Math.PI/2, aS = a0 + Math.PI*2*K.shareS/100, aT = aS + Math.PI*2*K.shareT/100;
+  if(K.shareS>0){ ctx.beginPath(); ctx.arc(dcx, dcy, R, a0, aS); ctx.strokeStyle = C.navy; ctx.stroke(); }
+  if(K.shareT>0){ ctx.beginPath(); ctx.arc(dcx, dcy, R, aS, aT); ctx.strokeStyle = C.gold; ctx.stroke(); }
+  ctx.textAlign = 'center';
+  font(800, 34); ctx.fillStyle = C.ink; ctx.fillText(formatCompactRp(K.gmvIni), dcx, dcy+8);
+  font(400, 16); ctx.fillStyle = C.muted; ctx.fillText('total GMV', dcx, dcy+34);
+  ctx.textAlign = 'left';
+  let ly = dcy + R + lw/2 + 50;
+  [['Shopee', K.shareS, C.navy], ['TikTok', K.shareT, C.gold]].forEach(([n, v, col])=>{
+    ctx.beginPath(); ctx.arc(x1+38, ly-7, 8, 0, Math.PI*2); ctx.fillStyle = col; ctx.fill();
+    font(500, 19); ctx.fillStyle = C.ink; ctx.fillText(n, x1+56, ly);
+    font(800, 19); ctx.textAlign = 'right'; ctx.fillText(fmt1(v)+'%', x1+w1-30, ly); ctx.textAlign = 'left';
+    ly += 38;
+  });
+  if(K.anyLalu && K.gmvLalu){
+    font(400, 15); ctx.fillStyle = C.muted;
+    ctx.fillText(fit(`${K.prev}: Shopee ${fmt1(K.pl.S/K.gmvLalu*100)}% · TikTok ${fmt1(K.pl.T/K.gmvLalu*100)}%`, w1-60), x1+30, ly+2);
+  }
+
+  // kontribusi per toko
+  card(x2, top2, w2, h2);
+  head(x2, top2, 'Kontribusi GMV per toko', `Persentase dari total GMV ${K.chLabel} · ${K.cur}`);
+  const list = K.sorted, n = list.length;
+  const areaTop = top2 + 116, areaH = h2 - 116 - 30;
+  const rowH = Math.min(54, areaH / Math.max(n,1));
+  const nameW = 230, pctW = 90, barX = x2 + 30 + nameW, barW = w2 - 60 - nameW - pctW;
+  const maxG = list[0].gmvIni || 1;
+  const fs = Math.max(13, Math.min(19, rowH*0.42));
+  list.forEach((r, i)=>{
+    const cy = areaTop + i*rowH + rowH/2;
+    ctx.beginPath(); ctx.arc(x2+36, cy, 6, 0, Math.PI*2); ctx.fillStyle = r.platform==='Shopee'?C.shopee:C.tiktok; ctx.fill();
+    font(600, fs); ctx.fillStyle = C.ink; ctx.textBaseline = 'middle';
+    ctx.fillText(fit(r.shop, nameW-36), x2+52, cy);
+    const bh = Math.max(8, Math.min(16, rowH*0.3));
+    rrect(barX, cy-bh/2, barW, bh, bh/2); ctx.fillStyle = C.track; ctx.fill();
+    const bw = Math.max(bh, (r.gmvIni||0)/maxG*barW);
+    rrect(barX, cy-bh/2, bw, bh, bh/2); ctx.fillStyle = i===0 ? C.gold : C.navy; ctx.fill();
+    font(800, fs); ctx.fillStyle = C.ink; ctx.textAlign = 'right';
+    ctx.fillText((K.gmvIni ? fmt1((r.gmvIni||0)/K.gmvIni*100) : '0') + '%', x2+w2-30, cy);
+    ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+  });
+
+  // toko naik vs turun
+  card(x3, top2, w3, h2);
+  head(x3, top2, 'Toko naik vs turun', `Berdasarkan growth GMV ${K.chLabel}`);
+  if(!K.compared.length){
+    font(400, 18); ctx.fillStyle = C.muted;
+    ctx.fillText('Belum ada data periode pembanding.', x3+30, top2+140);
+  } else {
+    const colW = (w3-60)/2;
+    // nama toko lengkap, dibungkus per baris; kalau terlalu banyak, sisanya jadi "+N toko lainnya"
+    const wrapNames = (names, maxW, maxLines)=>{
+      font(400, 16);
+      const lines = []; let line = '', used = 0;
+      for(let i=0;i<names.length;i++){
+        const t = line ? line + ', ' + names[i] : names[i];
+        if(ctx.measureText(t).width <= maxW || !line){ line = t; used = i+1; continue; }
+        lines.push(line + ',');
+        line = names[i]; used = i+1;
+      }
+      if(line) lines.push(line);
+      if(lines.length <= maxLines) return lines;
+      const kept = lines.slice(0, maxLines-1);
+      const shownCount = kept.join(' ').split(',').filter(x=> x.trim()).length;
+      return [...kept, `+${names.length - shownCount} toko lainnya`];
+    };
+    [[K.ups, C.up, 'Toko naik'], [K.downs, C.down, 'Toko turun']].forEach(([arr, col, lab], j)=>{
+      const cx = x3 + 30 + colW*j + colW/2, cy = top2 + 108 + 84, r = 72;
+      ctx.lineWidth = 20; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.strokeStyle = C.track; ctx.stroke();
+      if(arr.length){ ctx.beginPath(); ctx.arc(cx, cy, r, -Math.PI/2, -Math.PI/2 + Math.PI*2*arr.length/K.compared.length - 0.0001); ctx.strokeStyle = col; ctx.stroke(); }
+      ctx.lineCap = 'butt';
+      ctx.textAlign = 'center';
+      font(800, 44); ctx.fillStyle = C.ink; ctx.fillText(String(arr.length), cx, cy+16);
+      font(700, 19); ctx.fillText(lab, cx, cy + r + 52);
+      const lines = arr.length ? wrapNames(arr.map(x=> x.shop), colW-16, 6) : ['Tidak ada'];
+      font(400, 16); ctx.fillStyle = C.muted;
+      lines.forEach((ln, k)=> ctx.fillText(ln, cx, cy + r + 82 + k*24));
+      ctx.textAlign = 'left';
+    });
+    if(K.missing){
+      font(400, 15); ctx.fillStyle = C.muted;
+      ctx.fillText(fit(`${K.missing} toko belum punya data pembanding.`, w3-60), x3+30, top2+h2-28);
+    }
+  }
+  return cv;
+}
+
+async function downloadKPIPNG(){
+  if(!kpiCache){ alert(`Belum ada data KPI ${activeTab==='video'?'Video':'Live'} untuk didownload.`); return; }
+  await ensureSerifFont();
+  const cv = drawKPIImage();
+  const a = document.createElement('a');
+  a.download = `ringkasan-kpi-${activeTab}-${new Date().toISOString().slice(0,10)}.png`;
+  a.href = cv.toDataURL('image/png');
+  document.body.appendChild(a); a.click(); a.remove();
+  showToast('Gambar KPI siap (PNG 16:9)');
+}
+
 let chartResizeTimer = null, lastChartW = 0;
 window.addEventListener('resize', ()=>{
   clearTimeout(chartResizeTimer);
@@ -2530,6 +2794,7 @@ async function copyTableMarkdown(){
 }
 
 const DL_ACTIONS = {
+  'kpi-png': ()=> downloadKPIPNG(),
   'table-xlsx': ()=> downloadXLSX(),
   'table-csv': ()=> downloadCSV(),
   'table-md': ()=> copyTableMarkdown(),
