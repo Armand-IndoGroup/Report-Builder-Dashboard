@@ -446,6 +446,25 @@ header.top .brand-logo{display:none;}
 .tab.active .count{background:var(--gold); color:var(--navy);}
 
 .sec-actions{display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
+/* mode versus (3-4 periode) */
+.pb-multi{display:flex; flex-wrap:wrap; gap:14px 18px;}
+.pb-multi[hidden], .pfield[hidden]{display:none;}
+.pb-multi .pfield input{width:150px;}
+.pb-multi .pfield label .lt{color:var(--gold-ink);}
+.metric-bar{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin:0 0 12px;}
+.metric-bar > span{font-size:11px; letter-spacing:.14em; text-transform:uppercase; font-weight:700; color:var(--muted);}
+.mchips{display:flex; gap:6px; flex-wrap:wrap;}
+.mchips button{font-family:var(--body); font-size:12.5px; font-weight:600; color:var(--muted); background:rgba(255,255,255,.7);
+  border:1px solid var(--border); border-radius:20px; padding:6px 13px; cursor:pointer;}
+.mchips button:hover{color:var(--ink); border-color:var(--navy);}
+.mchips button[aria-pressed="true"]{background:var(--navy); color:var(--gold); border-color:var(--navy);}
+.mchips button:focus-visible{outline:2px solid var(--gold-2); outline-offset:2px;}
+th.gcol, td.gcol{background-clip:padding-box;}
+thead th.gcol{color:#C9D3D8; font-weight:600;}
+thead th.tg{color:var(--gold);}
+td.tg{font-weight:700;}
+.vs-pill{background:rgba(251,215,132,.18); border-color:rgba(251,215,132,.5); color:var(--gold);}
+/* KPI */
 /* KPI */
 .kpi{display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:16px;}
 .k{padding:18px 18px 16px; position:relative; min-width:0;}
@@ -593,7 +612,7 @@ header.top .brand-logo{display:none;}
     <h1>Report Builder</h1>
     <p class="sub">Drag semua file export periode sekarang &amp; pembanding sekaligus (Shopee: Live/Video overview CSV — TikTok: product list XLSX). Hanya performa <b>Live &amp; Video milik toko sendiri</b> (bukan afiliasi/kreator) yang dihitung. Selain GMV, Produk, dan CVR, sekarang ada Impresi, Klik, CTR, Penonton, dan durasi tonton.</p>
     </div>
-    <div class="hero-pills"><span class="pill gold" id="heroMode">Mingguan</span><span class="pill" id="heroFiles">Belum ada file</span></div>
+    <div class="hero-pills"><span class="pill gold" id="heroMode">Mingguan</span><span class="pill vs-pill" id="heroVs" hidden></span><span class="pill" id="heroFiles">Belum ada file</span></div>
   </header>
 
   <div class="card lifted">
@@ -624,8 +643,9 @@ header.top .brand-logo{display:none;}
           <button type="button" data-mode="monthly" aria-pressed="false">Bulanan</button>
         </div>
       </div>
-      <div class="pfield"><label for="lblCur">Periode sekarang</label><input id="lblCur" maxlength="18" autocomplete="off"></div>
-      <div class="pfield"><label for="lblPrev">Periode pembanding</label><input id="lblPrev" maxlength="18" autocomplete="off"></div>
+      <div class="pfield" id="pfCur"><label for="lblCur">Periode sekarang</label><input id="lblCur" maxlength="18" autocomplete="off"></div>
+      <div class="pfield" id="pfPrev"><label for="lblPrev">Periode pembanding</label><input id="lblPrev" maxlength="18" autocomplete="off"></div>
+      <div class="pb-multi" id="pbMulti" hidden></div>
       <button type="button" class="link-btn" id="lblReset">Kembalikan default</button>
       <div class="pb-hint" id="pbHint"></div>
     </div>
@@ -672,8 +692,8 @@ header.top .brand-logo{display:none;}
         <div class="dl-menu">
           <button class="btn primary dl-toggle" aria-haspopup="true" aria-expanded="false">⬇ Download</button>
           <div class="dl-pop" role="menu">
-            <button class="dl-item" role="menuitem" data-action="table-xlsx">Excel <small>tab aktif</small></button>
-            <button class="dl-item" role="menuitem" data-action="table-csv">CSV <small>tab aktif</small></button>
+            <button class="dl-item" role="menuitem" data-action="table-xlsx">Excel <small id="xlsxHint">tab aktif</small></button>
+            <button class="dl-item" role="menuitem" data-action="table-csv">CSV <small id="csvHint">tab aktif</small></button>
             <div class="dl-sep"></div>
             <button class="dl-item" role="menuitem" data-action="table-md">Salin tabel <small>Markdown</small></button>
           </div>
@@ -724,7 +744,7 @@ header.top .brand-logo{display:none;}
 
   <div class="card" id="chartsCard">
     <div class="toolbar" style="margin-top:0; margin-bottom:6px;">
-      <span class="note">Grafik batang horizontal <b>Live</b> per toko — <span class="lbl-vs">Ini vs Lalu</span>, diurutkan dari GMV tertinggi</span>
+      <span class="note">Grafik batang horizontal <b>Live</b> per toko — <span class="lbl-vs-all">Ini vs Lalu</span>, diurutkan dari GMV tertinggi</span>
       <div class="dl-menu">
         <button class="btn primary dl-toggle" aria-haspopup="true" aria-expanded="false">⬇ Download</button>
         <div class="dl-pop" role="menu">
@@ -834,12 +854,85 @@ function autoLabels(){
   const f = (x)=> (MONTHS_ID[x.m] || '?') + (withYear ? ' '+x.y : '');
   return {cur:f(a), prev:f(b)};
 }
+// ============================================================
+// MODE VERSUS (3-4 PERIODE) — aktif otomatis bila ada toko dengan >2 file.
+// Periode dicocokkan lewat tanggal mulai (bukan urutan file), maksimal 4 terbaru.
+// ============================================================
+const MAX_PERIODS = 4;
+labelState.multi = {weekly:{}, monthly:{}};   // label per tanggal mulai, hanya selama halaman terbuka
+
+function channelGroups(channelKey){
+  const groups = {};
+  for(const f of uploaded){
+    if(f.platform==='Shopee' && f.channel!==channelKey) continue;
+    const key = f.platform + '|' + (f.shop || f.fileName);
+    (groups[key] = groups[key] || []).push(f);
+  }
+  Object.values(groups).forEach(fs=> fs.sort((a,b)=> a.periodStart.localeCompare(b.periodStart)));
+  return groups;
+}
+function getPeriods(channelKey){
+  const groups = channelGroups(channelKey || activeTab);
+  const multi = Object.values(groups).some(fs=> fs.length > 2);
+  const all = [...new Set(Object.values(groups).flat().map(f=> f.periodStart))].sort();
+  const starts = multi ? all.slice(-MAX_PERIODS) : all;
+  return {multi, starts, truncated: multi && all.length > MAX_PERIODS, totalFound: all.length};
+}
+// pasangan Ini/Lalu per toko: mode biasa = file pertama vs terakhir; mode versus = 2 periode terbaru (per tanggal)
+function pickPair(files, channelKey){
+  const P = getPeriods(channelKey);
+  if(!P.multi) return {ini: files[files.length-1], lalu: files.length>1 ? files[0] : null};
+  const last = P.starts[P.starts.length-1], prev = P.starts[P.starts.length-2];
+  return {ini: files.find(f=> f.periodStart===last) || null, lalu: files.find(f=> f.periodStart===prev) || null};
+}
+
+function periodDates(start){
+  const f = uploaded.find(x=> x.periodStart===start);
+  const ds = String(f ? f.periodLabel : '').match(/\d{1,2}[\/-]\d{1,2}[\/-]\d{4}/g) || [];
+  const toObj = (d)=>{ const [dd,mm,yy] = d.split(/[\/-]/).map(Number); return {d:dd, m:mm-1, y:yy}; };
+  const a = ds.length ? toObj(ds[0]) : {d:+start.slice(8,10), m:+start.slice(5,7)-1, y:+start.slice(0,4)};
+  const b = ds.length>1 ? toObj(ds[ds.length-1]) : null;
+  return {a, b};
+}
+function autoMultiLabel(start, starts){
+  const {a, b} = periodDates(start);
+  const M = (x)=> MONTHS_ID[x.m] || '?';
+  if(labelState.mode==='monthly'){
+    const sameMonth = starts.filter(st=> st.slice(0,7)===start.slice(0,7)).length > 1;
+    const years = new Set(starts.map(st=> st.slice(0,4)));
+    if(!sameMonth) return M(a) + (years.size>1 ? ' '+a.y : '');
+  }
+  if(!b) return `${a.d} ${M(a)}`;
+  return a.m===b.m ? `${a.d}–${b.d} ${M(b)}` : `${a.d} ${M(a)}–${b.d} ${M(b)}`;
+}
+function periodLabelFor(start, starts){
+  const typed = ((labelState.multi[labelState.mode]||{})[start] || '').trim();
+  return typed || autoMultiLabel(start, starts);
+}
+function periodLabels(channelKey){
+  const P = getPeriods(channelKey);
+  return P.starts.map(st=> periodLabelFor(st, P.starts));
+}
+function vsText(channelKey){
+  const P = getPeriods(channelKey);
+  if(P.multi) return periodLabels(channelKey).join(' vs ');
+  const l = L(); return `${l.cur} vs ${l.prev}`;
+}
+
 function L(){
+  const P = getPeriods(activeTab);
+  const monthly = labelState.mode==='monthly';
+  if(P.multi && P.starts.length>=2){
+    const labs = P.starts.map(st=> periodLabelFor(st, P.starts));
+    const autos = P.starts.map(st=> autoMultiLabel(st, P.starts));
+    return {cur: labs[labs.length-1], prev: labs[labs.length-2],
+      auto:{cur: autos[autos.length-1], prev: autos[autos.length-2]}, monthly, multi:true};
+  }
   const auto = autoLabels(), st = labelState[labelState.mode];
   return {
     cur: (st.cur||'').trim() || auto.cur,
     prev: (st.prev||'').trim() || auto.prev,
-    auto, monthly: labelState.mode==='monthly',
+    auto, monthly, multi:false,
   };
 }
 // Ganti kata "Ini"/"Lalu" di judul kolom dengan label aktif (satu kali jalan, aman untuk label apa pun)
@@ -858,11 +951,36 @@ function applyLabelsUI(){
     b.setAttribute('aria-pressed', String(b.dataset.mode===labelState.mode));
   });
   const st = labelState[labelState.mode];
+  // mode versus: kolom label per periode (dibangun ulang hanya kalau daftar periodenya berubah)
+  const P = getPeriods(activeTab);
+  const box = document.getElementById('pbMulti');
+  document.getElementById('pfCur').hidden = P.multi;
+  document.getElementById('pfPrev').hidden = P.multi;
+  if(box){
+    box.hidden = !P.multi;
+    const sig = P.multi ? labelState.mode + '|' + P.starts.join(',') : '';
+    if(box.dataset.sig !== sig){
+      box.dataset.sig = sig;
+      box.innerHTML = P.multi ? P.starts.map((st,i)=> `<div class="pfield"><label for="lblP${i}">Periode ${i+1}${i===0?' <span class="lt">(terlama)</span>':''}${i===P.starts.length-1?' <span class="lt">(terbaru)</span>':''}</label><input id="lblP${i}" data-start="${st}" maxlength="18" autocomplete="off"></div>`).join('') : '';
+      box.querySelectorAll('input').forEach(inp=> inp.addEventListener('input', ()=>{
+        labelState.multi[labelState.mode][inp.dataset.start] = inp.value.slice(0,18);
+        clearTimeout(labelTimer);
+        labelTimer = setTimeout(render, 250);
+      }));
+    }
+    box.querySelectorAll('input').forEach(inp=>{
+      const stt = inp.dataset.start;
+      if(document.activeElement!==inp) inp.value = (labelState.multi[labelState.mode][stt]||'');
+      inp.placeholder = autoMultiLabel(stt, P.starts);
+    });
+  }
   const cur = document.getElementById('lblCur'), prev = document.getElementById('lblPrev');
   if(cur){ if(document.activeElement!==cur) cur.value = st.cur; cur.placeholder = l.auto.cur; }
   if(prev){ if(document.activeElement!==prev) prev.value = st.prev; prev.placeholder = l.auto.prev; }
   const hint = document.getElementById('pbHint');
-  if(hint){
+  if(hint && P.multi){
+    hint.textContent = `Mode versus aktif: ${P.starts.length} periode terdeteksi${P.truncated ? ` (dari ${P.totalFound}, ditampilkan ${MAX_PERIODS} terbaru)` : ''}. Kosongkan kolom untuk label otomatis dari tanggal file. KPI & Top 10 membandingkan 2 periode terbaru.`;
+  } else if(hint){
     hint.textContent = l.monthly
       ? `Kosongkan kolom untuk label otomatis dari tanggal file (${l.auto.cur} vs ${l.auto.prev}). Label dipakai di tabel, Top 10, grafik, dan semua download.`
       : `Kosongkan kolom untuk label bawaan (Ini vs Lalu). Label dipakai di tabel, Top 10, grafik, dan semua download.`;
@@ -870,6 +988,7 @@ function applyLabelsUI(){
   const eb = document.getElementById('eyebrow');
   if(eb) eb.textContent = `Indo Group · ${l.monthly ? 'Monthly' : 'Weekly'} Internal Channel Performance`;
   document.querySelectorAll('.lbl-vs').forEach(el=> el.textContent = `${l.cur} vs ${l.prev}`);
+  document.querySelectorAll('.lbl-vs-all').forEach(el=> el.textContent = vsText('live'));
 }
 
 // ============================================================
@@ -1119,8 +1238,10 @@ function buildChannelRows(channelKey){
 
   Object.entries(shopeeGroups).forEach(([key, files])=>{
     files.sort((a,b)=> a.periodStart.localeCompare(b.periodStart));
-    const lalu = files[0], ini = files[files.length-1];
-    const has2 = files.length>1;
+    const pair = pickPair(files, channelKey);
+    const ini = pair.ini, lalu = pair.lalu;
+    if(!ini) return; // mode versus: toko tanpa data periode terbaru tidak ikut KPI/Top 10
+    const has2 = !!lalu;
     const shop = ini.shop || 'Belum diketahui';
     rows.push({
       platform:'Shopee', shop,
@@ -1141,10 +1262,12 @@ function buildChannelRows(channelKey){
 
   Object.entries(tiktokGroups).forEach(([key, files])=>{
     files.sort((a,b)=> a.periodStart.localeCompare(b.periodStart));
-    const lalu = files[0], ini = files[files.length-1];
-    const has2 = files.length>1;
+    const pair = pickPair(files, channelKey);
+    const ini = pair.ini, lalu = pair.lalu;
+    if(!ini) return;
+    const has2 = !!lalu;
     const shop = ini.shop || 'Belum diketahui';
-    const ci = ini.channels[channelKey], cl = lalu.channels[channelKey];
+    const ci = ini.channels[channelKey], cl = lalu ? lalu.channels[channelKey] : null;
     rows.push({
       platform:'TikTok', shop,
       gmvIni: ci.gmv, gmvLalu: has2? cl.gmv : null,
@@ -1207,9 +1330,10 @@ function buildTopProducts(channelKey){
   const cards = [];
   Object.values(groups).forEach(files=>{
     files.sort((a,b)=> a.periodStart.localeCompare(b.periodStart));
-    const ini = files[files.length-1];
-    const has2 = files.length>1;
-    const lalu = has2 ? files[0] : null;
+    const pair = pickPair(files, channelKey);
+    const ini = pair.ini, lalu = pair.lalu;
+    if(!ini) return;
+    const has2 = !!lalu;
 
     const laluMap = new Map();
     if(lalu) (lalu.products||[]).forEach(p=> laluMap.set(p.id, p));
@@ -1738,6 +1862,64 @@ const CHART_COLORS = {
 };
 
 // Grafik batang horizontal berkelompok (clustered bar): satu grup per toko, batang Ini & Lalu.
+// warna seri dari terbaru ke terlama (2 periode tetap navy + emas seperti sebelumnya)
+const SERIES_COLORS = {2:['#0B1D26','#E3C46A'], 3:['#0B1D26','#5B7684','#E3C46A'], 4:['#0B1D26','#4A6573','#C9A54A','#F1DD9E']};
+// rows: {shop, platform, vals:[terbaru ... terlama]}, series: [{label, color}] (urutan sama)
+function buildMultiBarChartSVG(rows, series, fmt){
+  const C = CHART_COLORS;
+  const n = series.length;
+  const cw = (document.getElementById('chartsWrap')||{}).clientWidth || 780;
+  const width = Math.max(620, Math.min(1180, cw)), padLeft = 150, padRight = 96, padTop = 40, padBottom = 14;
+  const barH = n<=2 ? 19 : (n===3 ? 15 : 13), pairGap = 3, groupGap = 24;
+  const groupH = barH*n + pairGap*(n-1) + groupGap;
+  const plotW = width - padLeft - padRight;
+  const height = padTop + rows.length*groupH - groupGap/2 + padBottom;
+  const plotTop = padTop, plotBottom = height - padBottom;
+  const vals = [];
+  rows.forEach(r=> r.vals.forEach(v=>{ if(v!=null) vals.push(v); }));
+  const maxVal = Math.max(1, ...vals);
+  const tw = (t)=> Math.ceil(String(t).length*6.6);
+  let lx = padLeft, legend = '';
+  series.forEach(sr=>{
+    legend += `<rect x="${lx}" y="10" width="11" height="11" rx="2" fill="${sr.color}"/><text x="${lx+16}" y="19.5" font-size="11.5" fill="${C.muted}">${escapeHtml(sr.label)}</text>`;
+    lx += 16 + tw(sr.label) + 18;
+  });
+  lx += 12;
+  legend += `<circle cx="${lx+4}" cy="15.5" r="4.5" fill="${C.shopee}"/><text x="${lx+14}" y="19.5" font-size="11.5" fill="${C.muted}">Shopee</text>`;
+  lx += 14 + tw('Shopee') + 18;
+  legend += `<circle cx="${lx+4}" cy="15.5" r="4.5" fill="${C.tiktok}"/><text x="${lx+14}" y="19.5" font-size="11.5" fill="${C.muted}">TikTok</text>`;
+  let zebra = '', grid = '', bars = '';
+  [0.25,0.5,0.75,1].forEach(frac=>{
+    const gx = padLeft + frac*plotW;
+    grid += `<line x1="${gx}" y1="${plotTop-4}" x2="${gx}" y2="${plotBottom}" stroke="${C.grid}" stroke-width="1" stroke-dasharray="2,3"/>`;
+  });
+  rows.forEach((r,i)=>{
+    const gy = padTop + i*groupH;
+    if(i%2===1) zebra += `<rect x="0" y="${gy-groupGap/2}" width="${width}" height="${groupH}" fill="${C.zebra}"/>`;
+    const dotColor = r.platform==='Shopee' ? C.shopee : C.tiktok;
+    const cy = gy + (barH*n + pairGap*(n-1))/2;
+    let name = String(r.shop||'');
+    if(name.length>17) name = name.slice(0,16)+'…';
+    bars += `<circle cx="16" cy="${cy}" r="4.5" fill="${dotColor}"/>`;
+    bars += `<text x="28" y="${cy+4}" font-size="12.5" font-weight="700" fill="${C.ink}">${escapeHtml(name)}</text>`;
+    r.vals.forEach((v,j)=>{
+      const y = gy + j*(barH+pairGap);
+      if(v==null){
+        bars += `<text x="${padLeft+6}" y="${y+barH/2+4}" font-size="10.5" fill="${C.muted}">—</text>`;
+        return;
+      }
+      const w = Math.max(v/maxVal*plotW, 2);
+      bars += `<rect x="${padLeft}" y="${y}" width="${w}" height="${barH}" fill="${series[j].color}" rx="3"/>`;
+      bars += `<text x="${padLeft+w+7}" y="${y+barH/2+4}" font-size="${n>2?10.5:11.5}" ${j===0?'font-weight="700"':''} fill="${j===0?C.ink:C.muted}">${escapeHtml(fmt(v))}</text>`;
+    });
+  });
+  bars += `<line x1="${padLeft}" y1="${plotTop-4}" x2="${padLeft}" y2="${plotBottom}" stroke="${C.border}" stroke-width="1.4"/>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="100%" height="${height}" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" style="display:block; max-width:${width}px; background:#fff;">
+    <rect x="0" y="0" width="${width}" height="${height}" fill="#fff"/>
+    ${zebra}${grid}${legend}${bars}
+  </svg>`;
+}
+
 function buildVerticalBarChartSVG(rows, fmt){
   const C = CHART_COLORS;
   const cw = (document.getElementById('chartsWrap')||{}).clientWidth || 780;
@@ -1806,6 +1988,23 @@ function buildVerticalBarChartSVG(rows, fmt){
 function renderCharts(){
   const wrap = document.getElementById('chartsWrap');
   if(!wrap) return;
+  const PL = getPeriods('live');
+  if(PL.multi){
+    const {rows} = buildMultiRows('live');
+    if(!rows.length){ wrap.innerHTML = `<div class="empty-state"><div class="empty-icon">📊</div>Belum ada data Live untuk ditampilkan sebagai grafik.</div>`; return; }
+    const labs = periodLabels('live');
+    const cols = SERIES_COLORS[labs.length] || SERIES_COLORS[4];
+    const series = labs.map((lab,i)=> ({label:lab, color: cols[labs.length-1-i]})).reverse(); // terbaru dulu
+    const latest = (r, k)=>{ for(let i=r.vals.length-1;i>=0;i--){ if(r.vals[i]) return r.vals[i][k]||0; } return 0; };
+    rows.sort((a,b)=> latest(b,'gmv') - latest(a,'gmv'));
+    const mk = (k)=> buildMultiBarChartSVG(rows.map(r=> ({shop:r.shop, platform:r.platform, vals: [...r.vals].reverse().map(v=> v ? (v[k]==null?null:v[k]) : null)})), series,
+      k==='gmv' ? formatCompactRp : k==='ctr' ? formatCtrChart : formatCompactInt);
+    wrap.innerHTML = `
+    <div class="chart-block" data-chart="gmv"><div class="chart-block-head"><div class="chart-title">GMV (Rp)</div></div><div class="chart-scroll">${mk('gmv')}</div></div>
+    <div class="chart-block" data-chart="ctr"><div class="chart-block-head"><div class="chart-title">CTR (%)</div></div><div class="chart-scroll">${mk('ctr')}</div></div>
+    <div class="chart-block" data-chart="pcs"><div class="chart-block-head"><div class="chart-title">Produk Terjual (PCS)</div></div><div class="chart-scroll">${mk('produk')}</div></div>`;
+    return;
+  }
 
   const rows = buildChannelRows('live')
     .map(r=>({
@@ -1938,7 +2137,7 @@ async function downloadAllCharts(){
   ctx.fillRect(padOuter, padOuter+26, 34, 2);
   ctx.fillStyle = '#5B6B73';
   ctx.font = '400 11px -apple-system, Segoe UI, Roboto, sans-serif';
-  ctx.fillText(relabel('Ini vs Lalu, diurutkan dari GMV tertinggi'), padOuter, padOuter+42);
+  ctx.fillText(`${vsText('live')}, diurutkan dari GMV tertinggi`, padOuter, padOuter+42);
 
   let y = padOuter + headerH;
   imgs.forEach(({key, img, w, h})=>{
@@ -2003,17 +2202,21 @@ function renderTable(){
   const key = activeTab;
   const rows = buildChannelRows(key);
 
-  document.getElementById('cnt-live').textContent = buildChannelRows('live').length;
-  document.getElementById('cnt-video').textContent = buildChannelRows('video').length;
+  document.getElementById('cnt-live').textContent = Object.keys(channelGroups('live')).length;
+  document.getElementById('cnt-video').textContent = Object.keys(channelGroups('video')).length;
 
   const wrap = document.getElementById('tableWrap');
   const tableNote = document.getElementById('tableNote');
 
-  if(rows.length===0){
+  if(rows.length===0 && !getPeriods(key).multi){
     wrap.innerHTML = `<div class="empty-state"><div class="empty-icon">📄</div>Belum ada data ${activeTab==='video'?'Video':'Live'} yang diupload.</div>`;
     tableNote.textContent = '';
     return;
   }
+  const xh = document.getElementById('xlsxHint'), ch = document.getElementById('csvHint');
+  if(xh) xh.textContent = getPeriods(key).multi ? '1 sheet per metrik' : 'tab aktif';
+  if(ch) ch.textContent = getPeriods(key).multi ? 'metrik aktif' : 'tab aktif';
+  if(getPeriods(key).multi){ renderMultiTable(); return; }
 
   const extraLabel = EXTRA_LABEL[key];
   const hasAnyPenonton = rows.some(r=> r.penontonIni!==null && r.penontonIni!==undefined);
@@ -2107,7 +2310,147 @@ function renderTable(){
     : `Semua toko punya data lengkap (${escapeHtml(L().cur)} + ${escapeHtml(L().prev)}).`;
 }
 
+
+// ============================================================
+// TABEL VERSUS (mode 3-4 periode): pilih satu metrik, kolom per periode,
+// growth terhadap periode sebelumnya + total growth (periode pertama -> terakhir)
+// ============================================================
+let multiMetric = 'gmv';
+function multiMetrics(channelKey){
+  const list = [
+    {k:'gmv', t:'GMV (Rp)', short:'GMV', fmt:'int', sum:true},
+    {k:'produk', t:'Produk terjual', short:'Produk', fmt:'int', sum:true},
+    {k:'cvr', t:'CVR (%)', short:'CVR', fmt:'pct', ratio:['pesanan','klik']},
+    {k:'impresi', t:'Impresi', short:'Impresi', fmt:'int', sum:true},
+    {k:'klik', t:'Klik', short:'Klik', fmt:'int', sum:true},
+    {k:'ctr', t:'CTR (%)', short:'CTR', fmt:'pct', ratio:['klik','impresi']},
+  ];
+  if(EXTRA_LABEL[channelKey]) list.push({k:'extra', t:EXTRA_LABEL[channelKey], short:EXTRA_LABEL[channelKey], fmt:'int', sum:true});
+  const anyPen = uploaded.some(f=> f.platform==='Shopee' && f.channel===channelKey && f.penonton!==null && f.penonton!==undefined);
+  if(anyPen) list.push({k:'penonton', t:'Penonton', short:'Penonton', fmt:'int', sum:true, shopeeOnly:true});
+  return list;
+}
+function fileMetrics(f, channelKey){
+  if(!f) return null;
+  const src = f.platform==='TikTok' ? f.channels[channelKey] : f;
+  return {gmv:src.gmv, produk:src.produk, cvr:src.cvr, impresi:src.impresi, klik:src.klik, ctr:src.ctr,
+          extra:src.extra, pesanan:src.pesanan, penonton: f.platform==='Shopee' ? f.penonton : null};
+}
+function buildMultiRows(channelKey){
+  const P = getPeriods(channelKey);
+  const groups = channelGroups(channelKey);
+  const rows = Object.values(groups).map(fs=>{
+    const last = fs[fs.length-1];
+    return {platform:last.platform, shop:last.shop || 'Belum diketahui',
+      vals: P.starts.map(st=> fileMetrics(fs.find(f=> f.periodStart===st), channelKey))};
+  });
+  rows.sort((a,b)=> (a.platform+a.shop).localeCompare(b.platform+b.shop));
+  return {P, rows};
+}
+// nilai metrik per toko per periode + baris total
+function multiTable(channelKey, metricKey){
+  const {P, rows} = buildMultiRows(channelKey);
+  const metrics = multiMetrics(channelKey);
+  const m = metrics.find(x=> x.k===metricKey) || metrics[0];
+  const val = (v)=>{ if(!v) return null; const x = v[m.k]; return (x===null||x===undefined) ? null : x; };
+  const body = rows.map(r=> ({platform:r.platform, shop:r.shop, cells: r.vals.map(val)}));
+  const total = P.starts.map((_,i)=>{
+    const present = rows.map(r=> r.vals[i]).filter(Boolean);
+    if(!present.length) return null;
+    if(m.ratio){ const a = present.reduce((s,v)=> s+(v[m.ratio[0]]||0),0), b = present.reduce((s,v)=> s+(v[m.ratio[1]]||0),0); return b ? a/b*100 : null; }
+    const vals = present.map(v=> v[m.k]).filter(x=> x!==null && x!==undefined);
+    return vals.length ? vals.reduce((s,x)=> s+x, 0) : null;
+  });
+  // growth baris Total dihitung setara (like-for-like): hanya toko yang punya data di kedua periode yang dibandingkan
+  const eligible = (j)=> !(m.shopeeOnly && rows[j].platform==='TikTok');
+  const agg = (idx, i)=>{
+    const vs = idx.map(j=> rows[j].vals[i]);
+    if(m.ratio){ const a = vs.reduce((s,v)=> s+(v[m.ratio[0]]||0),0), b = vs.reduce((s,v)=> s+(v[m.ratio[1]]||0),0); return b ? a/b*100 : null; }
+    return vs.reduce((s,v)=> s+(v[m.k]||0), 0);
+  };
+  const lfl = (i0, i1)=>{
+    const idx = rows.map((r,j)=> (r.vals[i0] && r.vals[i1] && eligible(j)) ? j : -1).filter(j=> j>=0);
+    if(!idx.length) return null;
+    const a = agg(idx, i0), b = agg(idx, i1);
+    return (a===null||b===null) ? null : growth(b, a);
+  };
+  const nP = P.starts.length;
+  const totalG = P.starts.map((_,i)=> i===0 ? null : lfl(i-1, i));
+  const totalAll = nP>1 ? lfl(0, nP-1) : null;
+  const labels = periodLabels(channelKey);
+  const missing = body.filter(r=> r.cells.some(c=> c===null) && !(m.shopeeOnly && r.platform==='TikTok')).length;
+  return {P, m, metrics, labels, body, total, totalG, totalAll, missing};
+}
+function totalGrowth(cells){
+  const idx = cells.map((c,i)=> c!==null ? i : -1).filter(i=> i>=0);
+  if(idx.length<2) return null;
+  return growth(cells[idx[idx.length-1]], cells[idx[0]]);
+}
+function renderMultiTable(){
+  const key = activeTab;
+  const wrap = document.getElementById('tableWrap'), tableNote = document.getElementById('tableNote');
+  const T = multiTable(key, multiMetric);
+  multiMetric = T.m.k;
+  const f = (v)=> T.m.fmt==='pct' ? fmtPct(v) : fmtInt(v);
+  const n = T.labels.length;
+  let head = `<th>Toko</th>`;
+  T.labels.forEach((lab,i)=>{
+    head += `<th>${escapeHtml(lab)}</th>`;
+    if(i>0) head += `<th class="gcol" title="Growth ${escapeHtml(lab)} vs ${escapeHtml(T.labels[i-1])}">Growth</th>`;
+  });
+  head += `<th class="tg" title="${escapeHtml(T.labels[0])} → ${escapeHtml(T.labels[n-1])}">Total growth</th>`;
+  const rowHtml = (cells, gOverride, tgOverride)=>{
+    let h = '';
+    cells.forEach((c,i)=>{
+      h += `<td class="${c===null?'na':''}">${c===null?'—':f(c)}</td>`;
+      if(i>0) h += `<td class="gcol">${fmtGrowth(gOverride ? gOverride[i] : growth(c, cells[i-1]))}</td>`;
+    });
+    h += `<td class="tg">${fmtGrowth(gOverride ? tgOverride : totalGrowth(cells))}</td>`;
+    return h;
+  };
+  let html = `<div class="metric-bar"><span>Metrik</span><div class="mchips" role="group" aria-label="Pilih metrik">${T.metrics.map(x=> `<button type="button" data-metric="${x.k}" aria-pressed="${x.k===T.m.k}">${escapeHtml(x.short)}</button>`).join('')}</div></div>`;
+  html += `<div class="table-scroll"><table><thead><tr>${head}</tr></thead><tbody>`;
+  T.body.forEach(r=>{
+    const na = T.m.shopeeOnly && r.platform==='TikTok';
+    html += `<tr><td class="shop"><span class="platform-label ${r.platform==='Shopee'?'shopee':'tiktok'}">${r.platform}</span>${escapeHtml(r.shop)}</td>${na ? T.labels.map((_,i)=> `<td class="na">—</td>${i>0?'<td class="gcol na">—</td>':''}`).join('') + '<td class="tg na">—</td>' : rowHtml(r.cells)}</tr>`;
+  });
+  html += `<tr class="total"><td>Total</td>${rowHtml(T.total, T.totalG, T.totalAll)}</tr></tbody></table></div>`;
+  wrap.innerHTML = html;
+  wrap.querySelectorAll('.mchips button').forEach(b=> b.addEventListener('click', ()=>{ multiMetric = b.dataset.metric; renderMultiTable(); }));
+  const notes = [`<b>Mode versus ${n} periode</b> — growth dibanding periode sebelumnya; Total growth = ${escapeHtml(T.labels[0])} → ${escapeHtml(T.labels[n-1])}.`];
+  if(T.missing) notes.push(`<b>${T.missing} toko</b> tidak punya data di semua periode (ditandai —); growth di baris Total hanya menghitung toko yang punya data di kedua periode yang dibandingkan.`);
+  if(T.P.truncated) notes.push(`Ada ${T.P.totalFound} periode; yang ditampilkan ${MAX_PERIODS} terbaru.`);
+  tableNote.innerHTML = notes.join(' ');
+}
+function multiTableAOA(metricKey){
+  const T = multiTable(activeTab, metricKey);
+  const num = (v)=> (v===null||v===undefined||!isFinite(v)) ? '' : Math.round(v*100)/100;
+  const g = (a,b)=>{ const x = growth(a,b); return (x===null||!isFinite(x)) ? '' : Math.round(x*100)/100; };
+  const unit = T.m.fmt==='pct' ? ' (%)' : (T.m.k==='gmv' ? ' (Rp)' : '');
+  const header = ['Platform','Toko'];
+  T.labels.forEach((lab,i)=>{ header.push(`${T.m.short} ${lab}${unit}`); if(i>0) header.push(`Growth vs ${T.labels[i-1]} (%)`); });
+  header.push(`Total growth ${T.labels[0]} → ${T.labels[T.labels.length-1]} (%)`);
+  const r2 = (x)=> (x===null||x===undefined||!isFinite(x)) ? '' : Math.round(x*100)/100;
+  const line = (cells, gO, tgO)=>{ const out = []; cells.forEach((c,i)=>{ out.push(num(c)); if(i>0) out.push(gO ? r2(gO[i]) : g(c, cells[i-1])); }); out.push(r2(gO ? tgO : totalGrowth(cells))); return out; };
+  const aoa = [header];
+  T.body.forEach(r=>{
+    const na = T.m.shopeeOnly && r.platform==='TikTok';
+    aoa.push([r.platform, r.shop, ...(na ? header.slice(2).map(()=> '') : line(r.cells))]);
+  });
+  aoa.push(['Total','', ...line(T.total, T.totalG, T.totalAll)]);
+  return {aoa, T};
+}
+function multiTableMarkdown(){
+  const {aoa} = multiTableAOA(multiMetric);
+  const fmtCell = (v, h)=> (v===''||v===null) ? '—' : (typeof v==='number' ? (/Growth/.test(h) ? fmtGrowthMD(v) : v.toLocaleString('id-ID')) : String(v));
+  const head = aoa[0];
+  const lines = ['| ' + head.join(' | ') + ' |', '|' + head.map(()=> '---').join('|') + '|'];
+  aoa.slice(1).forEach(r=> lines.push('| ' + r.map((v,i)=> fmtCell(v, head[i])).join(' | ') + ' |'));
+  return lines.join('\n');
+}
+
 function tableToMarkdown(){
+  if(getPeriods(activeTab).multi) return multiTableMarkdown();
   const key = activeTab;
   const rows = buildChannelRows(key);
   const extraLabel = EXTRA_LABEL[key];
@@ -2239,7 +2582,7 @@ function buildTableAOA(){
 }
 
 function downloadCSV(){
-  const aoa = buildTableAOA();
+  const aoa = getPeriods(activeTab).multi ? multiTableAOA(multiMetric).aoa : buildTableAOA();
   if(aoa.length<=1){ alert('Belum ada data untuk didownload.'); return; }
   const esc = (v)=>{
     const s = String(v===undefined||v===null?'':v);
@@ -2256,6 +2599,19 @@ function downloadCSV(){
 }
 
 function downloadXLSX(){
+  if(getPeriods(activeTab).multi){
+    const wb = XLSX.utils.book_new();
+    const used = new Set();
+    multiMetrics(activeTab).forEach(m=>{
+      const {aoa} = multiTableAOA(m.k);
+      const ws = XLSX.utils.aoa_to_sheet(aoa);
+      ws['!cols'] = aoa[0].map((h,i)=> ({wch: i<2 ? 18 : Math.max(12, Math.min(30, String(h).length+2))}));
+      XLSX.utils.book_append_sheet(wb, ws, xlSheetName(m.short, used));
+    });
+    XLSX.writeFile(wb, `report-versus-${activeTab}-${new Date().toISOString().slice(0,10)}.xlsx`);
+    showToast('Excel versus siap: 1 sheet per metrik');
+    return;
+  }
   const aoa = buildTableAOA();
   if(aoa.length<=1){ alert('Belum ada data untuk didownload.'); return; }
   const ws = XLSX.utils.aoa_to_sheet(aoa);
@@ -2305,6 +2661,7 @@ document.querySelectorAll('#periodBar .seg button').forEach(b=>{
 });
 document.getElementById('lblReset').addEventListener('click', ()=>{
   labelState[labelState.mode] = {cur:'', prev:''};
+  labelState.multi[labelState.mode] = {};
   saveLabels();
   render();
   showToast('Label dikembalikan ke default');
@@ -2321,6 +2678,8 @@ document.querySelectorAll('.tab').forEach(tab=>{
     tab.classList.add('active');
     activeTab = tab.dataset.tab;
     document.querySelectorAll('.tab').forEach(t=> t.setAttribute('aria-selected', String(t===tab)));
+    applyLabelsUI();
+    renderHeroStatus();
     renderKPI();
     renderTable();
     renderTopProducts();
@@ -2339,10 +2698,13 @@ function renderHeroStatus(){
   const hf = document.getElementById('heroFiles');
   if(hf) hf.textContent = uploaded.length ? `${uploaded.length} file · ${shops.size} toko` : 'Belum ada file';
   const sm = document.getElementById('sideMode');
-  if(sm) sm.innerHTML = `<b>${modeTxt}</b>${escapeHtml(l.cur)} vs ${escapeHtml(l.prev)}`;
+  const Pv = getPeriods(activeTab);
+  if(sm) sm.innerHTML = Pv.multi ? `<b>${modeTxt} · versus ${Pv.starts.length} periode</b>${escapeHtml(vsText(activeTab))}` : `<b>${modeTxt}</b>${escapeHtml(l.cur)} vs ${escapeHtml(l.prev)}`;
+  const hv = document.getElementById('heroVs');
+  if(hv){ hv.hidden = !Pv.multi; hv.textContent = Pv.multi ? `Versus ${Pv.starts.length} periode` : ''; }
   const kt = document.getElementById('kpiTitle');
   if(kt){
-    const typed = (labelState[labelState.mode].cur||'').trim();
+    const typed = Pv.multi ? ((labelState.multi[labelState.mode]||{})[Pv.starts[Pv.starts.length-1]]||'').trim() : (labelState[labelState.mode].cur||'').trim();
     kt.textContent = typed ? `Gambaran ${typed}` : (l.monthly ? 'Gambaran bulan ini' : 'Gambaran minggu ini');
   }
 }
@@ -2538,8 +2900,9 @@ function kpiPeriodText(){
   const ini = new Set(), lalu = new Set();
   Object.values(groups).forEach(fs=>{
     fs.sort((a,b)=> a.periodStart.localeCompare(b.periodStart));
-    ini.add(cleanPeriod(fs[fs.length-1].periodLabel));
-    if(fs.length>1) lalu.add(cleanPeriod(fs[0].periodLabel));
+    const pr = pickPair(fs, activeTab);
+    if(pr.ini) ini.add(cleanPeriod(pr.ini.periodLabel));
+    if(pr.ini && pr.lalu) lalu.add(cleanPeriod(pr.lalu.periodLabel));
   });
   const one = (set)=> set.size===1 ? [...set][0] : (set.size ? 'beberapa periode' : '');
   const l = L();
