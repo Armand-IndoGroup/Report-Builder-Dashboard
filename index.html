@@ -446,6 +446,40 @@ header.top .brand-logo{display:none;}
 .tab.active .count{background:var(--gold); color:var(--navy);}
 
 .sec-actions{display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
+/* ===== DATABASE (data tersimpan) ===== */
+.db-card{margin-top:16px;}
+.db-top{display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap; margin-bottom:14px;}
+.db-top h3{font-family:var(--serif); font-weight:600; font-size:21px; margin:0 0 4px;}
+.db-top p{margin:0; font-size:12.5px; color:var(--muted); max-width:620px; line-height:1.5;}
+.db-role{display:inline-flex; align-items:center; gap:6px; font-size:11.5px; font-weight:700; padding:5px 11px; border-radius:20px; background:var(--gold-soft); color:var(--gold-ink); border:1px solid #F0DCA4;}
+.db-role.view{background:rgba(11,29,38,.06); color:var(--muted); border-color:var(--border);}
+.db-form{display:flex; flex-wrap:wrap; gap:12px 16px; align-items:flex-end;}
+.db-form .pfield input{width:230px;}
+.db-err{font-size:12.5px; color:var(--danger); margin-top:10px;}
+.db-bar{display:flex; flex-wrap:wrap; gap:12px 16px; align-items:flex-end; margin-bottom:14px;}
+.db-bar .pfield input[type=date]{width:160px;}
+.db-quick{display:flex; gap:6px; flex-wrap:wrap;}
+.db-list{display:grid; grid-template-columns:repeat(auto-fill, minmax(min(100%, 250px), 1fr)); gap:10px; max-height:420px; overflow:auto; padding:2px;}
+.dbp{display:flex; gap:10px; align-items:flex-start; padding:11px 12px; border-radius:12px; border:1px solid var(--border); background:rgba(255,255,255,.7); cursor:pointer; position:relative;}
+.dbp:hover{border-color:var(--navy);}
+.dbp.on{border-color:var(--navy); background:var(--gold-soft); box-shadow:inset 3px 0 0 var(--gold-2);}
+.dbp.off{opacity:.5; cursor:not-allowed;}
+.dbp input{margin-top:3px; accent-color:var(--navy); width:16px; height:16px; flex:none;}
+.dbp .t{font-weight:700; font-size:13.5px; color:var(--ink);}
+.dbp .m{font-size:11.5px; color:var(--muted); margin-top:2px;}
+.dbp details{font-size:11.5px; color:var(--muted); margin-top:6px;}
+.dbp details summary{cursor:pointer; color:var(--gold-ink); font-weight:600;}
+.dbp details li{margin:2px 0;}
+.dbp details ul{margin:6px 0 0; padding-left:16px;}
+.dbp .del{position:absolute; top:8px; right:8px; border:none; background:none; color:var(--muted-2); cursor:pointer; font-size:13px; padding:2px 5px; border-radius:6px;}
+.dbp .del:hover{color:var(--danger); background:var(--down-bg);}
+.db-foot{display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-top:14px; padding-top:14px; border-top:1px solid var(--border);}
+.db-foot .note{margin:0;}
+.db-empty{font-size:13px; color:var(--muted); padding:14px 0;}
+.dbtag{display:inline-block; font-size:10px; font-weight:700; padding:1px 7px; border-radius:10px; margin-left:4px;}
+.dbtag.saved{background:var(--up-bg); color:var(--success);}
+.dbtag.new{background:var(--gold-soft); color:var(--gold-ink);}
+.btn:disabled{opacity:.5; cursor:not-allowed;}
 /* mode versus (3-4 periode) */
 .pb-multi{display:flex; flex-wrap:wrap; gap:14px 18px;}
 .pb-multi[hidden], .pfield[hidden]{display:none;}
@@ -575,6 +609,7 @@ td.tg{font-weight:700;}
   <symbol id="i-click" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M9 3v3M3 9h3M5 5l2 2M12 11l8 3-3.5 1.5L15 19z"/></symbol>
   <symbol id="i-arr-up" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" d="M7 17L17 7M9 7h8v8"/></symbol>
   <symbol id="i-arr-down" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" d="M7 7l10 10M17 9v8H9"/></symbol>
+  <symbol id="i-db" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M4 6c0-1.7 3.6-3 8-3s8 1.3 8 3-3.6 3-8 3-8-1.3-8-3zM4 6v6c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/></symbol>
   <symbol id="i-dash" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" d="M6 12h12"/></symbol>
 </svg>
 
@@ -584,6 +619,7 @@ td.tg{font-weight:700;}
     <div class="nav-t">Menu</div>
     <ul class="nav">
       <li><a href="#upload" data-nav="upload"><svg aria-hidden="true"><use href="#i-up"/></svg>Upload &amp; label</a></li>
+      <li><a href="#database" data-nav="database"><svg aria-hidden="true"><use href="#i-db"/></svg>Data tersimpan</a></li>
       <li><a href="#ringkasan" data-nav="ringkasan"><svg aria-hidden="true"><use href="#i-sum"/></svg>Ringkasan KPI</a></li>
       <li><a href="#tabel" data-nav="tabel"><svg aria-hidden="true"><use href="#i-tbl"/></svg>Tabel brand</a></li>
       <li><a href="#top10" data-nav="top10"><svg aria-hidden="true"><use href="#i-top"/></svg>Top 10 produk</a></li>
@@ -598,6 +634,7 @@ td.tg{font-weight:700;}
 
 <nav class="mnav" aria-label="Menu">
   <a href="#upload" data-nav="upload"><svg aria-hidden="true"><use href="#i-up"/></svg>Upload</a>
+  <a href="#database" data-nav="database"><svg aria-hidden="true"><use href="#i-db"/></svg>Data</a>
   <a href="#ringkasan" data-nav="ringkasan"><svg aria-hidden="true"><use href="#i-sum"/></svg>KPI</a>
   <a href="#tabel" data-nav="tabel"><svg aria-hidden="true"><use href="#i-tbl"/></svg>Tabel</a>
   <a href="#top10" data-nav="top10"><svg aria-hidden="true"><use href="#i-top"/></svg>Top 10</a>
@@ -628,7 +665,8 @@ td.tg{font-weight:700;}
       <div class="chip-list" id="chipList"></div>
       <div class="toolbar">
         <span class="note" id="pairNote"></span>
-        <div style="display:flex; gap:8px;">
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button class="btn primary" id="dbSaveBtn" hidden>Simpan ke database</button>
           <button class="btn" id="clearBtn">Bersihkan semua</button>
         </div>
       </div>
@@ -650,6 +688,8 @@ td.tg{font-weight:700;}
       <div class="pb-hint" id="pbHint"></div>
     </div>
   </div>
+
+  <div class="card db-card" id="database"></div>
 
   <div class="sec-head" id="ringkasan">
     <div class="sec-left">
@@ -843,7 +883,14 @@ function saveLabels(){ /* sengaja tidak disimpan: label kembali ke default setel
 
 // Label otomatis bila kolom dikosongkan: Mingguan = Ini/Lalu, Bulanan = nama bulan dari tanggal file
 function autoLabels(){
-  if(labelState.mode==='weekly') return {cur:'Ini', prev:'Lalu'};
+  if(labelState.mode==='weekly'){
+    // data dari database bisa minggu yang tidak berurutan -> pakai tanggal, bukan "Ini/Lalu"
+    if(uploaded.length && uploaded.every(f=> f.fromDb)){
+      const st = [...new Set(uploaded.map(f=> f.periodStart))].sort();
+      if(st.length>=2) return {cur:autoMultiLabel(st[st.length-1], st), prev:autoMultiLabel(st[st.length-2], st)};
+    }
+    return {cur:'Ini', prev:'Lalu'};
+  }
   const ds = uploaded.map(f=> f.periodStart).filter(d=> d && d!=='0000-00-00').sort();
   if(!ds.length) return {cur:'Bulan Ini', prev:'Bulan Lalu'};
   const parse = (d)=> ({y:+d.slice(0,4), m:+d.slice(5,7)-1});
@@ -2172,7 +2219,7 @@ function renderChips(){
       : `TikTok · Live+Video internal`;
 
     // Selalu dropdown: toko yang salah terdeteksi bisa langsung diganti
-    const srcText = {id:'dari User Id', file:'dari nama file', produk:'dari nama produk', manual:'dipilih manual'}[f.shopSource] || '';
+    const srcText = {id:'dari User Id', file:'dari nama file', produk:'dari nama produk', manual:'dipilih manual', db:'dari database'}[f.shopSource] || '';
     const shopControl = `<select class="${needsShop?'':'set'}" onchange="assignShop(${f.id}, this.value)" title="Ganti toko">
         ${needsShop ? '<option value="">Pilih toko…</option>' : ''}
         ${KNOWN_SHOPS.map(s=>`<option value="${escapeHtml(s)}"${s===f.shop?' selected':''}>${escapeHtml(s)}</option>`).join('')}
@@ -2184,7 +2231,7 @@ function renderChips(){
       <div class="meta">
         <div style="display:flex; align-items:center; gap:6px;">${shopControl}<span style="color:var(--muted)">· ${tagText}</span></div>
         <span class="fname" title="${escapeHtml(f.fileName)}">${escapeHtml(f.fileName)} — ${escapeHtml(f.periodLabel)}</span>
-        ${srcText ? `<span class="src">Toko ${srcText}</span>` : ''}
+        ${srcText ? `<span class="src">Toko ${srcText}</span>` : ''}${db.role ? (f.fromDb ? '<span class="dbtag saved">Tersimpan</span>' : '<span class="dbtag new">Belum disimpan</span>') : ''}
       </div>
       <button class="x" onclick="removeFile(${f.id})" aria-label="Hapus">✕</button>
     `;
@@ -2193,6 +2240,13 @@ function renderChips(){
 
   const total = uploaded.length;
   const missing = uploaded.filter(f=>!f.shop).length;
+  const unsaved = uploaded.filter(f=> !f.fromDb).length;
+  const saveBtn = document.getElementById('dbSaveBtn');
+  if(saveBtn){
+    saveBtn.hidden = !(db.role==='edit' && unsaved>0);
+    saveBtn.textContent = `Simpan ${unsaved} file ke database`;
+    saveBtn.disabled = db.busy;
+  }
   note.textContent = missing
     ? `${total} file terupload · ${missing} file belum ada tokonya (border oranye). Pilih sekali saja — pilihan diingat untuk upload berikutnya.`
     : `${total} file terupload · semua toko terdeteksi. Toko yang salah bisa diganti lewat dropdown di tiap file.`;
@@ -2667,6 +2721,7 @@ document.getElementById('lblReset').addEventListener('click', ()=>{
   showToast('Label dikembalikan ke default');
 });
 
+document.getElementById('dbSaveBtn').addEventListener('click', dbSaveUploaded);
 document.getElementById('clearBtn').addEventListener('click', ()=>{
   uploaded = [];
   render();
@@ -2831,7 +2886,7 @@ function renderKPI(){
 // NAVIGASI (sidebar + menu bawah) & EFEK KACA
 // ============================================================
 (function initNav(){
-  const ids = ['upload','ringkasan','tabel','top10','grafik'];
+  const ids = ['upload','database','ringkasan','tabel','top10','grafik'];
   const setOn = (id)=> document.querySelectorAll('[data-nav]').forEach(a=>{
     const on = a.dataset.nav===id; a.classList.toggle('on', on);
     if(on) a.setAttribute('aria-current','true'); else a.removeAttribute('aria-current');
@@ -3136,6 +3191,277 @@ window.addEventListener('resize', ()=>{
   }, 200);
 });
 
+
+// ============================================================
+// DATABASE — Google Sheets lewat Google Apps Script (Web app)
+// Menyimpan angka hasil baca file per toko per periode supaya tim & owner bisa
+// memilih periode mana saja yang mau dibandingkan, tanpa upload ulang.
+// ============================================================
+const DB_URL_DEFAULT = '';               // diisi URL Web app setelah setup Google selesai
+const LS_DB = 'rb-db-v1';                // {url, code, name} — diingat di perangkat ini
+const DB_MAX = 4;
+const db = {url:'', code:'', name:'', role:null, files:[], busy:false, error:'', type:'weekly',
+            selected:new Set(), from:'', to:'', loadedAt:''};
+(function(){
+  const sv = lsGet(LS_DB, {}) || {};
+  db.url = DB_URL_DEFAULT || String(sv.url||'');
+  db.code = String(sv.code||'');
+  db.name = String(sv.name||'');
+})();
+function dbPersist(){ lsSet(LS_DB, {url: DB_URL_DEFAULT ? '' : db.url, code: db.code, name: db.name}); }
+
+async function dbCall(action, payload){
+  const res = await fetch(db.url, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body: JSON.stringify(Object.assign({code: db.code, action}, payload || {}))});
+  if(!res.ok) throw new Error(`Server menjawab ${res.status}. Cek URL Web app.`);
+  let j;
+  try{ j = await res.json(); }catch(e){ throw new Error('Jawaban server tidak terbaca. Pastikan Web app di-deploy dengan akses "Anyone".'); }
+  if(!j.ok) throw new Error(j.error || 'Permintaan gagal.');
+  return j;
+}
+
+// tanggal akhir & jenis periode dari label file (mingguan vs bulanan dideteksi dari panjang periode)
+function isoFromDMY(d){ const [dd,mm,yy] = d.split(/[\/-]/); return `${yy}-${mm.padStart(2,'0')}-${dd.padStart(2,'0')}`; }
+function periodEndOf(f){
+  const ds = String(f.periodLabel||'').match(/\d{1,2}[\/-]\d{1,2}[\/-]\d{4}/g) || [];
+  return ds.length>1 ? isoFromDMY(ds[ds.length-1]) : '';
+}
+function periodTypeOf(f){
+  const end = periodEndOf(f);
+  if(!end || !f.periodStart || f.periodStart==='0000-00-00') return labelState.mode;
+  const days = Math.round((new Date(end) - new Date(f.periodStart)) / 86400000) + 1;
+  return days >= 25 ? 'monthly' : 'weekly';
+}
+function dbKeyOf(f){
+  return [f.platform, f.shop, f.platform==='Shopee' ? f.channel : 'all', periodTypeOf(f), f.periodStart].join('|');
+}
+function fileToRecord(f){
+  const base = {key: dbKeyOf(f), platform: f.platform, shop: f.shop, userId: f.userId || '', channel: f.platform==='Shopee' ? f.channel : '',
+    type: periodTypeOf(f), periodStart: f.periodStart, periodEnd: periodEndOf(f), periodLabel: f.periodLabel, fileName: f.fileName,
+    uploadedBy: db.name || ''};
+  if(f.platform==='Shopee'){
+    base.data = {gmv:f.gmv, produk:f.produk, pesanan:f.pesanan, klik:f.klik, impresi:f.impresi, ctr:f.ctr, cvr:f.cvr,
+                 penonton:f.penonton, durasiTonton:f.durasiTonton, extra:f.extra};
+  } else {
+    base.data = {channels: f.channels};
+    base.products = (f.products||[]).map(pr=> [pr.id, pr.name, pr.live.gmv, pr.live.produk, pr.video.gmv, pr.video.produk]);
+  }
+  return base;
+}
+function recordToFile(rec, products){
+  const common = {id: idCounter++, fileName: rec.fileName || rec.key, platform: rec.platform, shop: rec.shop, shopSource:'db',
+    periodStart: rec.periodStart, periodLabel: rec.periodLabel || rec.periodStart, fromDb:true, dbKey: rec.key};
+  const d = rec.data || {};
+  if(rec.platform==='Shopee'){
+    return Object.assign(common, {channel: rec.channel, userId: rec.userId, shopKey:'shopee:'+rec.userId,
+      gmv:+d.gmv||0, produk:+d.produk||0, pesanan:+d.pesanan||0, klik:+d.klik||0, impresi:+d.impresi||0, ctr:+d.ctr||0, cvr:+d.cvr||0,
+      penonton: d.penonton==null ? null : +d.penonton, durasiTonton: d.durasiTonton || '—', extra: d.extra==null ? null : +d.extra});
+  }
+  return Object.assign(common, {shopKey:'tiktok:'+rec.shop, channels: d.channels || {live:{}, video:{}},
+    products: (products||[]).map(a=> ({id:String(a[0]), name:String(a[1]), live:{gmv:+a[2]||0, produk:+a[3]||0}, video:{gmv:+a[4]||0, produk:+a[5]||0}}))});
+}
+
+// daftar periode tersimpan untuk jenis aktif (terbaru dulu)
+function dbPeriods(){
+  const map = {};
+  db.files.filter(f=> f.type===db.type).forEach(f=>{
+    const k = f.periodStart;
+    (map[k] = map[k] || {start:k, end:'', files:[]}).files.push(f);
+    if(f.periodEnd > map[k].end) map[k].end = f.periodEnd;
+  });
+  return Object.values(map).sort((a,b)=> b.start.localeCompare(a.start));
+}
+function dbPeriodLabel(pp){
+  const p = (iso)=> ({d:+iso.slice(8,10), m:+iso.slice(5,7)-1, y:+iso.slice(0,4)});
+  const a = p(pp.start), M = (x)=> MONTHS_ID[x.m] || '?';
+  if(db.type==='monthly') return `${M(a)} ${a.y}`;
+  if(!pp.end) return `${a.d} ${M(a)} ${a.y}`;
+  const b = p(pp.end);
+  return a.m===b.m ? `${a.d}–${b.d} ${M(b)} ${b.y}` : (a.y===b.y ? `${a.d} ${M(a)}–${b.d} ${M(b)} ${b.y}` : `${a.d} ${M(a)} ${a.y}–${b.d} ${M(b)} ${b.y}`);
+}
+function dbVisible(){
+  return dbPeriods().filter(pp=> (!db.from || pp.start >= db.from) && (!db.to || pp.start <= db.to));
+}
+
+function renderDB(){
+  const el = document.getElementById('database');
+  if(!el) return;
+  const head = (sub, right)=> `<div class="db-top"><div><div class="sec-eyebrow" style="margin-bottom:6px">Database tim</div><h3>Data tersimpan</h3><p>${sub}</p></div>${right||''}</div>`;
+  const err = db.error ? `<div class="db-err" role="alert">${escapeHtml(db.error)}</div>` : '';
+
+  if(!db.url){
+    el.innerHTML = head('Database belum disambungkan. Tempel URL Web app dari Google Apps Script (lihat panduan setup).') +
+      `<div class="db-form"><div class="pfield"><label for="dbUrl">URL Web app</label><input id="dbUrl" placeholder="https://script.google.com/macros/s/…/exec" style="width:min(460px, 80vw)"></div>
+       <button class="btn primary" id="dbUrlBtn">Sambungkan</button></div>${err}`;
+    document.getElementById('dbUrlBtn').onclick = ()=>{
+      const v = document.getElementById('dbUrl').value.trim();
+      if(!/^https:\/\/script\.google(usercontent)?\.com\//.test(v)){ db.error = 'URL harus diawali https://script.google.com/…'; renderDB(); return; }
+      db.url = v; db.error = ''; dbPersist(); renderDB();
+    };
+    return;
+  }
+
+  if(!db.role){
+    el.innerHTML = head('Masukkan kode akses untuk melihat data yang sudah disimpan tim. Kode diingat di perangkat ini sampai kamu keluar.') +
+      `<form class="db-form" id="dbLogin" autocomplete="off">
+        <div class="pfield"><label for="dbCode">Kode akses</label><input id="dbCode" type="password" value="${escapeHtml(db.code)}" required></div>
+        <div class="pfield"><label for="dbName">Nama kamu <span style="font-weight:400">(opsional, untuk catatan upload)</span></label><input id="dbName" value="${escapeHtml(db.name)}" maxlength="30"></div>
+        <button class="btn primary" type="submit" ${db.busy?'disabled':''}>${db.busy ? 'Memeriksa…' : 'Masuk'}</button>
+       </form>${err}`;
+    document.getElementById('dbLogin').onsubmit = (e)=>{
+      e.preventDefault();
+      db.code = document.getElementById('dbCode').value.trim();
+      db.name = document.getElementById('dbName').value.trim();
+      if(!db.code){ db.error = 'Isi kode akses dulu.'; renderDB(); return; }
+      dbRefresh(true);
+    };
+    return;
+  }
+
+  const periods = dbPeriods(), vis = dbVisible();
+  const counts = {weekly: new Set(db.files.filter(f=>f.type==='weekly').map(f=>f.periodStart)).size,
+                  monthly: new Set(db.files.filter(f=>f.type==='monthly').map(f=>f.periodStart)).size};
+  [...db.selected].forEach(st=>{ if(!periods.some(pp=> pp.start===st)) db.selected.delete(st); });
+  const full = db.selected.size >= DB_MAX;
+  const roleBadge = db.role==='edit' ? `<span class="db-role">● Tim · bisa simpan &amp; hapus</span>` : `<span class="db-role view">● Lihat saja</span>`;
+  const right = `<div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap">${roleBadge}
+      <button class="btn" id="dbReload" ${db.busy?'disabled':''}>${db.busy?'Memuat…':'↻ Muat ulang'}</button>
+      <button class="btn" id="dbLogout">Keluar</button></div>`;
+  const unit = db.type==='monthly' ? 'bulan' : 'minggu';
+  const list = vis.length ? vis.map(pp=>{
+    const on = db.selected.has(pp.start);
+    const shops = [...new Set(pp.files.map(f=> f.shop))];
+    const last = pp.files.map(f=> f.uploadedAt).sort().pop() || '';
+    const who = [...new Set(pp.files.map(f=> f.uploadedBy).filter(Boolean))].join(', ');
+    return `<label class="dbp${on?' on':''}${(!on && full)?' off':''}">
+      <input type="checkbox" data-start="${pp.start}" ${on?'checked':''} ${(!on && full)?'disabled':''}>
+      <div style="min-width:0; padding-right:18px">
+        <div class="t">${escapeHtml(dbPeriodLabel(pp))}</div>
+        <div class="m">${shops.length} toko · ${pp.files.length} file${last ? ` · ${escapeHtml(last)}` : ''}</div>
+        <details><summary>Lihat toko</summary><ul>${pp.files.map(f=> `<li>${escapeHtml(f.shop)} · ${f.platform}${f.platform==='Shopee' ? ' '+(f.channel==='video'?'Video':'Live') : ''}${f.uploadedBy ? ` · oleh ${escapeHtml(f.uploadedBy)}` : ''}</li>`).join('')}</ul>${who?'':''}</details>
+      </div>
+      ${db.role==='edit' ? `<button type="button" class="del" data-del="${pp.start}" title="Hapus data periode ini" aria-label="Hapus data periode ${escapeHtml(dbPeriodLabel(pp))}">✕</button>` : ''}
+    </label>`;
+  }).join('') : `<div class="db-empty">${periods.length ? 'Tidak ada periode di rentang tanggal ini.' : `Belum ada data ${db.type==='monthly'?'bulanan':'mingguan'} tersimpan.${db.role==='edit' ? ' Upload file di atas lalu klik “Simpan ke database”.' : ''}`}</div>`;
+  const selLabels = periods.filter(pp=> db.selected.has(pp.start)).sort((a,b)=> a.start.localeCompare(b.start)).map(dbPeriodLabel);
+
+  el.innerHTML = head(`Centang 1–${DB_MAX} periode yang ingin dibandingkan — boleh tidak berurutan. ${db.files.length} file tersimpan.`, right) +
+    `<div class="db-bar">
+      <div class="pfield"><label>Jenis data</label><div class="seg" role="group" aria-label="Jenis data">
+        <button type="button" data-dbtype="weekly" aria-pressed="${db.type==='weekly'}">Mingguan (${counts.weekly})</button>
+        <button type="button" data-dbtype="monthly" aria-pressed="${db.type==='monthly'}">Bulanan (${counts.monthly})</button></div></div>
+      <div class="pfield"><label for="dbFrom">Dari tanggal</label><input type="date" id="dbFrom" value="${db.from}"></div>
+      <div class="pfield"><label for="dbTo">Sampai tanggal</label><input type="date" id="dbTo" value="${db.to}"></div>
+      <div class="pfield"><label>Pilih cepat</label><div class="db-quick">
+        <button type="button" class="btn" data-quick="2">2 ${unit} terakhir</button>
+        <button type="button" class="btn" data-quick="4">4 ${unit} terakhir</button>
+        <button type="button" class="btn" data-quick="0">Kosongkan</button></div></div>
+    </div>
+    <div class="db-list">${list}</div>
+    <div class="db-foot"><span class="note">${db.selected.size ? `<b>${db.selected.size} dari ${DB_MAX}</b> dipilih: ${selLabels.map(escapeHtml).join(' · ')}` : `Belum ada periode dipilih (maks. ${DB_MAX}).`}</span>
+      <button class="btn primary" id="dbShow" ${(!db.selected.size || db.busy)?'disabled':''}>Tampilkan di dashboard</button></div>${err}`;
+
+  el.querySelectorAll('[data-dbtype]').forEach(b=> b.onclick = ()=>{ if(db.type!==b.dataset.dbtype){ db.type = b.dataset.dbtype; db.selected.clear(); renderDB(); } });
+  el.querySelector('#dbFrom').onchange = (e)=>{ db.from = e.target.value; renderDB(); };
+  el.querySelector('#dbTo').onchange = (e)=>{ db.to = e.target.value; renderDB(); };
+  el.querySelectorAll('[data-quick]').forEach(b=> b.onclick = ()=>{
+    const n = +b.dataset.quick; db.selected.clear();
+    dbVisible().slice(0, n).forEach(pp=> db.selected.add(pp.start));
+    renderDB();
+  });
+  el.querySelectorAll('.dbp input[type=checkbox]').forEach(cb=> cb.onchange = ()=>{
+    if(cb.checked){ if(db.selected.size >= DB_MAX){ cb.checked = false; return; } db.selected.add(cb.dataset.start); }
+    else db.selected.delete(cb.dataset.start);
+    renderDB();
+  });
+  el.querySelectorAll('[data-del]').forEach(b=> b.onclick = (e)=>{ e.preventDefault(); e.stopPropagation(); dbDeletePeriod(b.dataset.del); });
+  el.querySelector('#dbReload').onclick = ()=> dbRefresh(false);
+  el.querySelector('#dbLogout').onclick = ()=>{
+    db.code = ''; db.role = null; db.files = []; db.selected.clear(); db.error = ''; dbPersist(); renderDB(); renderChips();
+  };
+  el.querySelector('#dbShow').onclick = dbShowSelected;
+}
+
+async function dbRefresh(isLogin, silent){
+  db.busy = true; db.error = ''; renderDB();
+  try{
+    const j = await dbCall('list');
+    db.role = j.role; db.files = j.files || [];
+    dbPersist();
+    // pilih jenis yang ada datanya bila jenis aktif masih kosong
+    if(isLogin && !db.files.some(f=> f.type===db.type) && db.files.length) db.type = db.files[0].type;
+    if(isLogin && !silent) showToast(j.role==='edit' ? 'Masuk sebagai tim' : 'Masuk · lihat saja');
+  }catch(e){
+    db.error = e.message || String(e);
+    if(/Kode akses salah/.test(db.error)){ db.role = null; db.code = ''; dbPersist(); }
+  }
+  db.busy = false;
+  renderDB(); renderChips();
+}
+
+async function dbShowSelected(){
+  const starts = [...db.selected].sort();
+  if(!starts.length) return;
+  const recs = db.files.filter(f=> f.type===db.type && db.selected.has(f.periodStart));
+  const unsaved = uploaded.filter(f=> !f.fromDb).length;
+  if(unsaved && !confirm(`Ada ${unsaved} file yang belum disimpan ke database. Ganti tampilan dengan data tersimpan? File yang belum disimpan akan hilang dari layar.`)) return;
+  db.busy = true; db.error = ''; renderDB();
+  try{
+    const tKeys = recs.filter(r=> r.platform==='TikTok').map(r=> r.key);
+    const prods = tKeys.length ? (await dbCall('products', {keys: tKeys})).products || {} : {};
+    uploaded = recs.map(r=> recordToFile(r, prods[r.key]));
+    labelState.mode = db.type;
+    db.busy = false;
+    render(); renderDB();
+    showToast(`${starts.length} periode dimuat dari database`);
+    const k = document.getElementById('ringkasan');
+    if(k) window.scrollTo({top: k.getBoundingClientRect().top + window.scrollY - 14, behavior:'smooth'});
+  }catch(e){
+    db.busy = false; db.error = e.message || String(e); renderDB();
+  }
+}
+
+async function dbSaveUploaded(){
+  const todo = uploaded.filter(f=> !f.fromDb);
+  if(!todo.length) return;
+  const noShop = todo.filter(f=> !f.shop);
+  if(noShop.length){ alert(`${noShop.length} file belum ada tokonya. Pilih tokonya dulu (kotak oranye) sebelum menyimpan.`); return; }
+  const bad = todo.filter(f=> !f.periodStart || f.periodStart==='0000-00-00');
+  if(bad.length){ alert(`Tanggal periode tidak terbaca di: ${bad.map(f=> f.fileName).join(', ')}. File ini tidak bisa disimpan.`); return; }
+  const recs = todo.map(fileToRecord);
+  const dupKeys = recs.map(r=> r.key).filter((k,i,a)=> a.indexOf(k)!==i);
+  if(dupKeys.length && !confirm(`Ada file ganda untuk toko & periode yang sama (${[...new Set(dupKeys)].join(', ')}). Yang terakhir akan dipakai. Lanjut?`)) return;
+  const existing = new Set(db.files.map(f=> f.key));
+  const replacing = recs.filter(r=> existing.has(r.key)).length;
+  if(replacing && !confirm(`${replacing} file akan MENGGANTI data yang sudah tersimpan untuk toko & periode yang sama. Lanjut?`)) return;
+  db.busy = true; renderChips(); renderDB();
+  try{
+    const j = await dbCall('save', {files: recs});
+    todo.forEach((f,i)=>{ f.fromDb = true; f.dbKey = recs[i].key; });
+    const baru = (j.saved||[]).filter(x=> x.status==='baru').length, ganti = (j.saved||[]).filter(x=> x.status==='diganti').length;
+    db.busy = false;
+    showToast(`${baru + ganti} file tersimpan${ganti ? ` (${ganti} mengganti data lama)` : ''}`);
+    await dbRefresh(false);
+  }catch(e){
+    db.busy = false; db.error = 'Gagal menyimpan: ' + (e.message || e); renderChips(); renderDB();
+    alert(db.error);
+  }
+}
+
+async function dbDeletePeriod(start){
+  const pp = dbPeriods().find(x=> x.start===start);
+  if(!pp) return;
+  if(!confirm(`Hapus SEMUA data periode ${dbPeriodLabel(pp)} (${pp.files.length} file)? Ini tidak bisa dibatalkan.`)) return;
+  db.busy = true; renderDB();
+  try{
+    await dbCall('delete', {keys: pp.files.map(f=> f.key)});
+    db.selected.delete(start);
+    db.busy = false;
+    showToast(`Data ${dbPeriodLabel(pp)} dihapus`);
+    await dbRefresh(false);
+  }catch(e){ db.busy = false; db.error = 'Gagal menghapus: ' + (e.message || e); renderDB(); }
+}
+
 let toastTimer = null;
 function showToast(msg){
   const t = document.getElementById('toast');
@@ -3200,6 +3526,8 @@ document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closeMenus(); }
 // init
 loadUserMap().then(render);
 render();
+renderDB();
+if(db.url && db.code) dbRefresh(true, true);   // sudah pernah masuk di perangkat ini -> langsung muat daftar periode
 </script>
 </body>
 </html>
