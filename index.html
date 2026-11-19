@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" class="locked">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -432,6 +432,10 @@ header.top .brand-logo{display:none;}
 .hero-pills{display:flex; gap:8px; flex-wrap:wrap;}
 .pill{display:inline-flex; align-items:center; gap:8px; padding:8px 14px; border-radius:30px; font-size:12px; font-weight:700; color:#fff;
   background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.2); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); white-space:nowrap;}
+.pill[hidden]{display:none !important;}
+.sub-view{display:none;}
+html.role-view .sub-edit{display:none;}
+html.role-view .sub-view{display:block;}
 .pill.gold{background:var(--gold); color:var(--navy); border-color:var(--gold);}
 
 /* section head + tab kaca */
@@ -446,6 +450,66 @@ header.top .brand-logo{display:none;}
 .tab.active .count{background:var(--gold); color:var(--navy);}
 
 .sec-actions{display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
+/* ===== HALAMAN MASUK ===== */
+#gate{display:none;}
+html.locked #gate{display:flex;}
+html.locked .side, html.locked .mnav, html.locked .wrap{display:none !important;}
+html.locked body{overflow:hidden;}
+#gate{
+  position:fixed; inset:0; z-index:300; align-items:center; justify-content:center; padding:20px;
+  background-color:var(--navy);
+  background-image:
+    linear-gradient(120deg, rgba(11,29,38,.94) 0%, rgba(11,29,38,.80) 55%, rgba(11,29,38,.62) 100%),
+    var(--batik);
+  background-size:cover; background-position:center;
+}
+.gate-card{
+  width:min(420px, 100%); padding:34px 32px 30px; border-radius:22px; color:#fff;
+  background:rgba(11,29,38,.62); border:1px solid rgba(255,255,255,.14);
+  backdrop-filter:blur(18px) saturate(140%); -webkit-backdrop-filter:blur(18px) saturate(140%);
+  box-shadow:0 24px 60px rgba(0,0,0,.35);
+}
+.gate-logo{width:58px; height:58px; border-radius:14px; background:#fff; padding:7px; display:flex; margin-bottom:22px; box-shadow:0 4px 14px rgba(0,0,0,.25);}
+.gate-logo img{width:100%; height:100%; object-fit:contain;}
+.gate-card .eyebrow{margin-bottom:8px;}
+.gate-card h1{font-size:34px; margin:0 0 8px;}
+.gate-card p.gsub{margin:0 0 24px; font-size:13.5px; line-height:1.55; color:rgba(255,255,255,.72);}
+.gate-field{display:flex; flex-direction:column; gap:6px; margin-bottom:16px;}
+.gate-field label{font-size:12px; font-weight:600; color:rgba(255,255,255,.8);}
+.gate-input{position:relative;}
+.gate-input input{
+  width:100%; font-family:var(--body); font-size:15px; color:var(--ink); background:#fff;
+  border:1px solid transparent; border-radius:11px; padding:12px 44px 12px 14px;
+}
+.gate-input input:focus{outline:none; border-color:var(--gold); box-shadow:0 0 0 3px rgba(251,215,132,.35);}
+.gate-eye{position:absolute; right:6px; top:50%; transform:translateY(-50%); border:none; background:none; color:var(--muted);
+  cursor:pointer; padding:6px 8px; border-radius:8px; font-size:12px; font-weight:700;}
+.gate-eye:hover{color:var(--ink); background:rgba(11,29,38,.06);}
+.gate-btn{
+  width:100%; margin-top:6px; font-family:var(--body); font-size:14.5px; font-weight:700; color:var(--navy);
+  background:var(--gold); border:none; border-radius:11px; padding:13px 16px; cursor:pointer; transition:filter .15s;
+}
+.gate-btn:hover{filter:brightness(1.05);}
+.gate-btn:disabled{opacity:.6; cursor:progress;}
+.gate-btn:focus-visible, .gate-eye:focus-visible, .gate-link:focus-visible{outline:2px solid var(--gold); outline-offset:2px;}
+.gate-err{margin-top:14px; font-size:13px; color:#FFB4A8; line-height:1.45;}
+.gate-link{display:inline-block; margin-top:14px; font-family:var(--body); font-size:12.5px; color:rgba(255,255,255,.7);
+  background:none; border:none; text-decoration:underline; text-underline-offset:3px; cursor:pointer; padding:0;}
+.gate-wait{display:flex; align-items:center; gap:12px; font-size:14px; color:rgba(255,255,255,.85); padding:8px 0;}
+.gate-spin{width:20px; height:20px; border-radius:50%; border:2.5px solid rgba(255,255,255,.25); border-top-color:var(--gold); animation:gspin .8s linear infinite;}
+@keyframes gspin{to{transform:rotate(360deg);}}
+@media (prefers-reduced-motion:reduce){ .gate-spin{animation-duration:2.4s;} }
+.lite .gate-card{backdrop-filter:none; -webkit-backdrop-filter:none; background:rgba(11,29,38,.92);}
+
+/* owner (kode lihat): tanpa kartu upload; kartu Data tersimpan naik menumpang di header */
+html.role-view .card.lifted{display:none;}
+html.role-view [data-nav="upload"]{display:none;}
+html.role-view .db-card{margin:-72px 22px 0; position:relative; z-index:2; border-color:var(--glass-line); background:#fff; backdrop-filter:none; -webkit-backdrop-filter:none;
+  box-shadow:0 18px 40px rgba(11,29,38,.18), inset 0 1px 0 rgba(255,255,255,.9);}
+@media (max-width:860px){ html.role-view .db-card{margin:-70px 8px 0;} }
+.db-user{font-size:12px; color:var(--muted);}
+.db-user b{color:var(--ink);}
+
 /* ===== DATABASE (data tersimpan) ===== */
 .db-card{margin-top:16px;}
 .db-top{display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap; margin-bottom:14px;}
@@ -596,6 +660,9 @@ td.tg{font-weight:700;}
 </style>
 </head>
 <body>
+<div id="gate" role="dialog" aria-modal="true" aria-labelledby="gateTitle">
+  <div class="gate-card" id="gateCard"></div>
+</div>
 <div class="bg" aria-hidden="true"><i></i><i></i><i></i></div>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <symbol id="i-up" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 16V4m0 0L7 9m5-5 5 5M5 20h14"/></symbol>
@@ -647,7 +714,8 @@ td.tg{font-weight:700;}
     <div>
     <div class="eyebrow" id="eyebrow">Indo Group · Weekly Internal Channel Performance</div>
     <h1>Report Builder</h1>
-    <p class="sub">Drag semua file export periode sekarang &amp; pembanding sekaligus (Shopee: Live/Video overview CSV — TikTok: product list XLSX). Hanya performa <b>Live &amp; Video milik toko sendiri</b> (bukan afiliasi/kreator) yang dihitung. Selain GMV, Produk, dan CVR, sekarang ada Impresi, Klik, CTR, Penonton, dan durasi tonton.</p>
+    <p class="sub sub-edit">Drag semua file export periode sekarang &amp; pembanding sekaligus (Shopee: Live/Video overview CSV — TikTok: product list XLSX). Hanya performa <b>Live &amp; Video milik toko sendiri</b> (bukan afiliasi/kreator) yang dihitung. Selain GMV, Produk, dan CVR, sekarang ada Impresi, Klik, CTR, Penonton, dan durasi tonton.</p>
+    <p class="sub sub-view">Pilih periode di kartu <b>Data tersimpan</b> lalu klik <b>Tampilkan di dashboard</b> untuk melihat laporan Live &amp; Video tiap toko.</p>
     </div>
     <div class="hero-pills"><span class="pill gold" id="heroMode">Mingguan</span><span class="pill vs-pill" id="heroVs" hidden></span><span class="pill" id="heroFiles">Belum ada file</span></div>
   </header>
@@ -2789,7 +2857,10 @@ function renderKPI(){
   const chLabel = activeTab==='video' ? 'Video' : 'Live';
   const rows = buildChannelRows(activeTab);
   if(!rows.length){
-    wrap.innerHTML = `<div class="card glass"><div class="empty-state"><div class="empty-icon">📈</div>Upload file untuk melihat ringkasan KPI ${chLabel}.</div></div>`;
+    const hint = db.role==='view' ? `Pilih periode di kartu Data tersimpan lalu klik “Tampilkan di dashboard” untuk melihat KPI ${chLabel}.`
+      : db.role==='edit' ? `Upload file atau pilih periode di Data tersimpan untuk melihat ringkasan KPI ${chLabel}.`
+      : `Upload file untuk melihat ringkasan KPI ${chLabel}.`;
+    wrap.innerHTML = `<div class="card glass"><div class="empty-state"><div class="empty-icon">📈</div>${hint}</div></div>`;
     kpiCache = null;
     return;
   }
@@ -2894,7 +2965,7 @@ function renderKPI(){
   const pick = ()=>{
     let cur = ids[0];
     ids.forEach(id=>{ const el = document.getElementById(id); if(el && el.getBoundingClientRect().top < window.innerHeight*0.35) cur = id; });
-    if((window.innerHeight + window.scrollY) >= document.documentElement.scrollHeight - 4) cur = ids[ids.length-1];
+    if(window.scrollY > 40 && (window.innerHeight + window.scrollY) >= document.documentElement.scrollHeight - 4) cur = ids[ids.length-1];
     setOn(cur);
   };
   let ticking = false;
@@ -3301,29 +3372,15 @@ function renderDB(){
     return;
   }
 
-  if(!db.role){
-    el.innerHTML = head('Masukkan kode akses untuk melihat data yang sudah disimpan tim. Kode diingat di perangkat ini sampai kamu keluar.') +
-      `<form class="db-form" id="dbLogin" autocomplete="off">
-        <div class="pfield"><label for="dbCode">Kode akses</label><input id="dbCode" type="password" value="${escapeHtml(db.code)}" required></div>
-        <div class="pfield"><label for="dbName">Nama kamu <span style="font-weight:400">(opsional, untuk catatan upload)</span></label><input id="dbName" value="${escapeHtml(db.name)}" maxlength="30"></div>
-        <button class="btn primary" type="submit" ${db.busy?'disabled':''}>${db.busy ? 'Memeriksa…' : 'Masuk'}</button>
-       </form>${err}`;
-    document.getElementById('dbLogin').onsubmit = (e)=>{
-      e.preventDefault();
-      db.code = document.getElementById('dbCode').value.trim();
-      db.name = document.getElementById('dbName').value.trim();
-      if(!db.code){ db.error = 'Isi kode akses dulu.'; renderDB(); return; }
-      dbRefresh(true);
-    };
-    return;
-  }
+  if(!db.role){ el.innerHTML = ''; return; }   // belum masuk: halaman masuk yang tampil
 
   const periods = dbPeriods(), vis = dbVisible();
   const counts = {weekly: new Set(db.files.filter(f=>f.type==='weekly').map(f=>f.periodStart)).size,
                   monthly: new Set(db.files.filter(f=>f.type==='monthly').map(f=>f.periodStart)).size};
   [...db.selected].forEach(st=>{ if(!periods.some(pp=> pp.start===st)) db.selected.delete(st); });
   const full = db.selected.size >= DB_MAX;
-  const roleBadge = db.role==='edit' ? `<span class="db-role">● Tim · bisa simpan &amp; hapus</span>` : `<span class="db-role view">● Lihat saja</span>`;
+  const roleBadge = (db.role==='edit' ? `<span class="db-role">● Tim · bisa simpan &amp; hapus</span>` : `<span class="db-role view">● Lihat saja</span>`)
+    + (db.role==='edit' && db.name ? `<span class="db-user">Masuk sebagai <b>${escapeHtml(db.name)}</b></span>` : '');
   const right = `<div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap">${roleBadge}
       <button class="btn" id="dbReload" ${db.busy?'disabled':''}>${db.busy?'Memuat…':'↻ Muat ulang'}</button>
       <button class="btn" id="dbLogout">Keluar</button></div>`;
@@ -3376,9 +3433,7 @@ function renderDB(){
   });
   el.querySelectorAll('[data-del]').forEach(b=> b.onclick = (e)=>{ e.preventDefault(); e.stopPropagation(); dbDeletePeriod(b.dataset.del); });
   el.querySelector('#dbReload').onclick = ()=> dbRefresh(false);
-  el.querySelector('#dbLogout').onclick = ()=>{
-    db.code = ''; db.role = null; db.files = []; db.selected.clear(); db.error = ''; dbPersist(); renderDB(); renderChips();
-  };
+  el.querySelector('#dbLogout').onclick = gateLogout;
   el.querySelector('#dbShow').onclick = dbShowSelected;
 }
 
@@ -3393,10 +3448,101 @@ async function dbRefresh(isLogin, silent){
     if(isLogin && !silent) showToast(j.role==='edit' ? 'Masuk sebagai tim' : 'Masuk · lihat saja');
   }catch(e){
     db.error = e.message || String(e);
-    if(/Kode akses salah/.test(db.error)){ db.role = null; db.code = ''; dbPersist(); }
+    if(/Kode akses salah/.test(db.error)){ db.busy = false; gateLogout('Kode akses sudah diganti. Masukkan kode yang baru.'); return; }
   }
   db.busy = false;
   renderDB(); renderChips();
+}
+
+// ============================================================
+// HALAMAN MASUK — semua fitur terkunci sampai kode akses benar.
+// Diingat di perangkat ini sampai "Keluar". Kode tim wajib isi nama.
+// ============================================================
+function renderGate(step, msg){
+  const card = document.getElementById('gateCard');
+  if(!card) return;
+  const top = `<div class="gate-logo"><img src="logo.png" alt="Logo Indo Group"></div>
+    <div class="eyebrow">Indo Group</div><h1 id="gateTitle">Report Builder</h1>`;
+  const err = msg ? `<div class="gate-err" role="alert">${escapeHtml(msg)}</div>` : '';
+  if(step==='checking'){
+    card.innerHTML = top + `<p class="gsub">Membuka dashboard…</p><div class="gate-wait"><span class="gate-spin" aria-hidden="true"></span>Memeriksa kode akses</div>`;
+    return;
+  }
+  if(step==='name'){
+    card.innerHTML = top + `<p class="gsub">Kode tim diterima. Isi namamu sekali saja — dipakai untuk mencatat siapa yang menyimpan data.</p>
+      <form id="gateNameForm" autocomplete="off" novalidate>
+        <div class="gate-field"><label for="gateName">Nama kamu</label><div class="gate-input"><input id="gateName" maxlength="30" value="${escapeHtml(db.name)}" autocomplete="name"></div></div>
+        <button class="gate-btn" type="submit">Masuk ke dashboard</button>
+      </form>${err}`;
+    const inp = document.getElementById('gateName');
+    setTimeout(()=> inp.focus(), 30);
+    document.getElementById('gateNameForm').onsubmit = (e)=>{
+      e.preventDefault();
+      const v = inp.value.trim().replace(/\s+/g,' ');
+      if(v.length < 2){ renderGate('name', 'Isi nama dulu (minimal 2 huruf).'); return; }
+      db.name = v; dbPersist(); gateUnlock();
+    };
+    return;
+  }
+  card.innerHTML = top + `<p class="gsub">Masukkan kode akses untuk membuka dashboard.</p>
+    <form id="gateForm" autocomplete="off" novalidate>
+      <div class="gate-field"><label for="gateCode">Kode akses</label>
+        <div class="gate-input"><input id="gateCode" type="password" value="${escapeHtml(db.code)}" autocomplete="current-password">
+          <button type="button" class="gate-eye" id="gateEye" aria-label="Tampilkan kode">Lihat</button></div></div>
+      <button class="gate-btn" type="submit" id="gateBtn">Masuk</button>
+    </form>${err}`;
+  const inp = document.getElementById('gateCode');
+  setTimeout(()=> inp.focus(), 30);
+  document.getElementById('gateEye').onclick = ()=>{
+    const show = inp.type==='password';
+    inp.type = show ? 'text' : 'password';
+    const b = document.getElementById('gateEye'); b.textContent = show ? 'Sembunyikan' : 'Lihat'; b.setAttribute('aria-label', show ? 'Sembunyikan kode' : 'Tampilkan kode');
+  };
+  document.getElementById('gateForm').onsubmit = (e)=>{
+    e.preventDefault();
+    const v = inp.value.trim();
+    if(!v){ renderGate('code', 'Isi kode akses dulu.'); return; }
+    db.code = v;
+    gateLogin(true);
+  };
+}
+
+async function gateLogin(fresh){
+  renderGate('checking');
+  try{
+    const j = await dbCall('list');
+    db.role = j.role; db.files = j.files || []; db.error = '';
+    if(!db.files.some(f=> f.type===db.type) && db.files.length) db.type = db.files[0].type;
+    dbPersist();
+    if(db.role==='edit' && !db.name){ renderGate('name'); return; }
+    gateUnlock();
+    if(fresh) showToast(db.role==='edit' ? `Masuk sebagai ${db.name}` : 'Masuk · lihat saja');
+  }catch(e){
+    const m = e.message || String(e);
+    if(/Kode akses salah/.test(m)){ db.code = ''; db.role = null; dbPersist(); renderGate('code', 'Kode akses salah. Coba lagi.'); }
+    else renderGate('code', /fetch|network|Failed/i.test(m) ? 'Tidak bisa terhubung ke database. Cek koneksi internet lalu coba lagi.' : m);
+  }
+}
+
+function gateUnlock(){
+  const h = document.documentElement;
+  h.classList.toggle('role-view', db.role==='view');
+  h.classList.toggle('role-edit', db.role==='edit');
+  h.classList.remove('locked');
+  render(); renderDB();
+  window.scrollTo(0, 0);
+  window.dispatchEvent(new Event('scroll'));   // hitung ulang penanda menu samping setelah halaman terbuka
+}
+
+function gateLogout(msg){
+  db.code = ''; db.name = ''; db.role = null; db.files = []; db.selected.clear(); db.error = ''; db.busy = false;
+  dbPersist();
+  uploaded = [];                       // data di layar ikut dibersihkan saat keluar
+  const h = document.documentElement;
+  h.classList.remove('role-view', 'role-edit');
+  h.classList.add('locked');
+  render(); renderDB();
+  renderGate('code', typeof msg==='string' ? msg : '');
 }
 
 async function dbShowSelected(){
@@ -3527,7 +3673,8 @@ document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closeMenus(); }
 loadUserMap().then(render);
 render();
 renderDB();
-if(db.url && db.code) dbRefresh(true, true);   // sudah pernah masuk di perangkat ini -> langsung muat daftar periode
+if(db.url && db.code) gateLogin(false);        // sudah pernah masuk di perangkat ini -> masuk otomatis
+else renderGate('code');
 </script>
 </body>
 </html>
