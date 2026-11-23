@@ -1032,6 +1032,11 @@ html.present .rv-row{font-size:14.5px;}
   .rv summary{padding:16px;} .rv-body{padding:0 16px 16px;}
 }
 
+.pc-top{display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:14px;}
+.pc-title{font-family:var(--serif); font-weight:600; font-size:20px; color:var(--ink); margin:2px 0 14px;}
+#chartsWrap .chart-block{padding-top:4px;}
+#chartsWrap .chart-scroll{overflow:visible;}
+@media (max-width:640px){ .pc-title{font-size:17px;} }
 </style>
 </head>
 <body>
@@ -1273,6 +1278,7 @@ html.present .rv-row{font-size:14.5px;}
           <button class="dl-item" role="menuitem" data-action="chart-gmv">GMV <small>PNG</small></button>
           <button class="dl-item" role="menuitem" data-action="chart-ctr">CTR <small>PNG</small></button>
           <button class="dl-item" role="menuitem" data-action="chart-pcs">Produk Terjual <small>PNG</small></button>
+          <button class="dl-item" role="menuitem" data-action="chart-growth">Naik &amp; turun <small>PNG</small></button>
         </div>
       </div>
     </div>
@@ -4759,6 +4765,216 @@ window.renderReview = (function(orig){ return function(){ return withFilter(orig
 renderReview();
 
 // ============================================================
+// GRAFIK PERFORMA PER TOKO (v2) — ikut tab Live/Video
+// Satu batang per toko (periode terbaru) + garis penanda periode sebelumnya + growth,
+// dipisah panel TikTok | Shopee. Plus grafik "Naik & turun" (growth GMV dua arah).
+// ============================================================
+const PC_METRICS = {
+  gmv: {name:'GMV', two:['gmvIni','gmvLalu'], multi:'gmv', fmt:(v)=> 'Rp'+formatCompactRp(v), sum:true},
+  ctr: {name:'CTR', two:['ctrIni','ctrLalu'], multi:'ctr', fmt:(v)=> fmtPct(v), sum:false},
+  pcs: {name:'Produk terjual', two:['produkIni','produkLalu'], multi:'produk', fmt:(v)=> fmtInt(v)+' pcs', sum:true},
+};
+let pcMetric = 'gmv';
+const PC_LIGHT = {bg:'#FFFFFF', ink:'#0B1D26', muted:'#5B6B73', faint:'#93A0A6', track:'#F1EDE4', bar:'#0B1D26', top:'#C9A54A',
+  ticks:['#6F7F87','#A9B4B9','#CBD2D5'], up:'#2F7A55', upBg:'#E3F1E9', down:'#B0413E', downBg:'#F8E4E2', naBg:'#EEF0F1', line:'#E6E1D6', gold:'#8C6B14'};
+const PC_DARK = {bg:'#10232C', ink:'#E8EEF0', muted:'#9AACB4', faint:'#6C828C', track:'#183039', bar:'#8FB0BF', top:'#FBD784',
+  ticks:['#E8EEF0','#9AACB4','#5E7480'], up:'#6CCB98', upBg:'rgba(108,203,152,.16)', down:'#F08A84', downBg:'rgba(240,138,132,.16)', naBg:'rgba(255,255,255,.07)', line:'#22363F', gold:'#E9C978'};
+function pcTheme(forExport){ return (!forExport && isDark()) ? PC_DARK : PC_LIGHT; }
+function pcEsc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function pcG(g){ return (g===null||g===undefined||!isFinite(g)) ? null : g; }
+
+// data: {labs:[terlama..terbaru], rows:[{shop,platform,vals:[...]}]}
+function pcData(mk){
+  const m = PC_METRICS[mk], ch = activeTab, P = getPeriods(ch);
+  if(P.multi){
+    const {rows} = buildMultiRows(ch);
+    return {labs: periodLabels(ch), rows: rows.map(r=> ({shop:r.shop, platform:r.platform, vals:r.vals.map(v=> v ? (v[m.multi]==null ? null : v[m.multi]) : null)}))};
+  }
+  const l = L();
+  return {labs:[l.prev, l.cur], rows: buildChannelRows(ch).map(r=> ({shop:r.shop, platform:r.platform, vals:[r[m.two[1]]==null ? null : r[m.two[1]], r[m.two[0]]==null ? null : r[m.two[0]]]}))};
+}
+const pcLast = (r)=> r.vals[r.vals.length-1];
+const pcPrev = (r)=> r.vals.length>1 ? r.vals[r.vals.length-2] : null;
+function pcTitle(mk){
+  const ch = activeTab==='video' ? 'Video' : 'Live';
+  if(mk==='growth'){
+    const d = pcData('gmv'), c = d.rows.filter(r=> pcLast(r)!=null && pcPrev(r)>0);
+    const up = c.filter(r=> pcLast(r)>=pcPrev(r)).length;
+    return c.length ? `${up} toko naik, ${c.length-up} toko turun` : `Naik & turun GMV ${ch}`;
+  }
+  const d = pcData(mk), m = PC_METRICS[mk];
+  const t = d.rows.filter(r=> pcLast(r)!=null).sort((a,b)=> pcLast(b)-pcLast(a))[0];
+  if(!t) return `${m.name} ${ch} per toko`;
+  if(mk==='gmv') return `${t.shop} ${t.platform} punya GMV ${ch} tertinggi (${m.fmt(pcLast(t))})`;
+  if(mk==='ctr') return `CTR ${ch} tertinggi di ${t.shop} ${t.platform} (${m.fmt(pcLast(t))})`;
+  return `${t.shop} ${t.platform} menjual produk terbanyak (${m.fmt(pcLast(t))})`;
+}
+
+// SVG batang per toko, panel per platform
+function pcSVG(mk, W, forExport){
+  const C = pcTheme(forExport), m = PC_METRICS[mk], d = pcData(mk);
+  const FONT = '-apple-system,Segoe UI,Roboto,sans-serif';
+  const rowsAll = d.rows.filter(r=> pcLast(r)!=null);
+  if(!rowsAll.length) return '';
+  const topRow = [...rowsAll].sort((a,b)=> pcLast(b)-pcLast(a))[0];
+  const plats = ['TikTok','Shopee'].map(p=> ({p, rows: rowsAll.filter(r=> r.platform===p).sort((a,b)=> pcLast(b)-pcLast(a))})).filter(x=> x.rows.length);
+  const side = W>=860 && plats.length>1, gap = 40;
+  const pw = side ? (W-gap)/2 : W;
+  const headH = 44, compact = pw < 560, rowH = compact ? 58 : 46;
+  let legH = 34;
+  const nMax = Math.max(...plats.map(x=> x.rows.length));
+  const panelH = (n)=> headH + n*rowH;
+  const nP = d.labs.length;
+  let g = '';
+  // legenda (pindah baris bila sempit)
+  const legItems = [{t:d.labs[nP-1], bar:true}];
+  for(let i=nP-2, k=0; i>=0; i--, k++) legItems.push({t:d.labs[i], k});
+  let lx = 0, ly = 0;
+  legItems.forEach(it=>{
+    const w = (it.bar ? 32 : 13) + String(it.t).length*7.2 + 16;
+    if(lx>0 && lx + w > W){ lx = 0; ly += 24; }
+    if(it.bar) g += `<rect x="${lx}" y="${ly+9}" width="22" height="12" rx="6" fill="${C.bar}"/><text x="${lx+30}" y="${ly+20}" font-size="12.5" fill="${C.muted}">${pcEsc(it.t)}</text>`;
+    else g += `<rect x="${lx}" y="${ly+5}" width="3.5" height="20" rx="1.5" fill="${C.ticks[Math.min(it.k,2)]}"/><text x="${lx+11}" y="${ly+20}" font-size="12.5" fill="${C.muted}">${pcEsc(it.t)}</text>`;
+    lx += w;
+  });
+  if(side && lx + 170 < W) g += `<text x="${W}" y="20" text-anchor="end" font-size="11.5" fill="${C.faint}">Skala tiap panel terpisah</text>`;
+  legH = 34 + ly;
+  const H = legH + (side ? panelH(nMax) : plats.reduce((s,x)=> s+panelH(x.rows.length)+18, -18)) + 6;
+  const pill = (x, ym, gr)=>{
+    const t = gr===null ? '—' : `${gr>=0?'▲':'▼'} ${rvPct(gr)}`, w = Math.max(44, t.length*7.1 + 14);
+    return {w, s:`<rect x="${x-w}" y="${ym-11}" width="${w}" height="22" rx="11" fill="${gr===null?C.naBg:gr>=0?C.upBg:C.downBg}"/><text x="${x-w/2}" y="${ym+4.5}" text-anchor="middle" font-size="12" font-weight="800" fill="${gr===null?C.faint:gr>=0?C.up:C.down}">${t}</text>`};
+  };
+  plats.forEach((pl, pi)=>{
+    const x0 = side ? pi*(pw+gap) : 0;
+    const y0 = legH + (side ? 0 : plats.slice(0,pi).reduce((s,x)=> s+panelH(x.rows.length)+18, 0));
+    // kepala panel: platform + total + growth (setara)
+    let head = pl.p.toUpperCase(), hg = null;
+    if(m.sum){
+      const tot = pl.rows.reduce((s,r)=> s+(pcLast(r)||0), 0);
+      const cmp = pl.rows.filter(r=> pcPrev(r)!=null);
+      if(cmp.length) hg = pcG(growth(cmp.reduce((s,r)=> s+pcLast(r),0), cmp.reduce((s,r)=> s+pcPrev(r),0)));
+      head += `  ·  ${m.fmt(tot)}`;
+    } else head += `  ·  ${pl.rows.length} toko`;
+    g += `<text x="${x0}" y="${y0+22}" font-size="13" font-weight="800" letter-spacing="1.5" fill="${C.gold}">${pcEsc(head)}</text>`;
+    if(m.sum){ g += pill(x0+pw, y0+17, hg).s; }
+    g += `<rect x="${x0}" y="${y0+34}" width="${pw}" height="1" fill="${C.line}"/>`;
+    const labelW = compact ? 0 : Math.min(150, pw*0.27), valW = compact ? 0 : 86, pillW = compact ? 0 : 76;
+    const tx0 = x0 + labelW, tw = pw - labelW - valW - pillW - (compact ? 0 : 10);
+    const max = Math.max(1e-9, ...pl.rows.map(r=> Math.max(...r.vals.filter(v=> v!=null))));
+    pl.rows.forEach((r, i)=>{
+      const yr = y0 + headH + i*rowH + rowH/2, last = pcLast(r), isTop = r===topRow;
+      const ym = compact ? yr + 12 : yr, yt = compact ? yr - 12 : yr;
+      const name = r.shop.length>18 ? r.shop.slice(0,17)+'…' : r.shop;
+      g += `<text x="${x0}" y="${yt+5}" font-size="14" font-weight="${isTop?800:600}" fill="${C.ink}">${pcEsc(name)}</text>`;
+      g += `<rect x="${tx0}" y="${ym-9}" width="${tw}" height="18" rx="9" fill="${C.track}"/>`;
+      g += `<rect x="${tx0}" y="${ym-9}" width="${Math.max(4, last/max*tw).toFixed(1)}" height="18" rx="9" fill="${isTop?C.top:C.bar}"/>`;
+      for(let j=r.vals.length-2, k=0; j>=0; j--, k++){
+        const v = r.vals[j]; if(v==null) continue;
+        const px = tx0 + Math.min(1, v/max)*tw;
+        g += `<rect x="${(px-2).toFixed(1)}" y="${ym-14}" width="4" height="28" rx="2" fill="${C.ticks[Math.min(k,2)]}" stroke="${C.bg}" stroke-width="1"/>`;
+      }
+      const pillSpace = 84;
+      if(compact) g += `<text x="${x0+pw-pillSpace}" y="${yt+5}" text-anchor="end" font-size="14" font-weight="800" fill="${C.ink}">${pcEsc(m.fmt(last))}</text>`;
+      else g += `<text x="${tx0+tw+10}" y="${ym+5}" font-size="14" font-weight="800" fill="${C.ink}">${pcEsc(m.fmt(last))}</text>`;
+      const pv = pcPrev(r);
+      const gr = mk==='ctr' ? (pv==null ? null : null) : pcG(pv ? growth(last, pv) : null);
+      if(mk==='ctr'){
+        const dd = pv==null ? null : last - pv;
+        const t = dd===null ? '—' : `${dd>=0?'▲':'▼'} ${Math.abs(dd).toFixed(2).replace('.',',')} poin`, w = t.length*6.6 + 14;
+        g += `<rect x="${x0+pw-w}" y="${yt-11}" width="${w}" height="22" rx="11" fill="${dd===null?C.naBg:dd>=0?C.upBg:C.downBg}"/><text x="${x0+pw-w/2}" y="${yt+4.5}" text-anchor="middle" font-size="11.5" font-weight="800" fill="${dd===null?C.faint:dd>=0?C.up:C.down}">${t}</text>`;
+      } else g += pill(x0+pw, yt, gr).s;
+    });
+  });
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" font-family="${FONT}" role="img" aria-label="${pcEsc(pcTitle(mk))}" style="display:block; width:100%; height:auto; max-width:${W}px;"><rect width="${W}" height="${H}" fill="${C.bg}"/>${g}</svg>`;
+}
+
+// SVG naik & turun (growth GMV dua arah)
+function pcGrowthSVG(W, forExport){
+  const C = pcTheme(forExport), d = pcData('gmv');
+  const FONT = '-apple-system,Segoe UI,Roboto,sans-serif';
+  const rows = d.rows.filter(r=> pcLast(r)!=null && pcPrev(r)>0).map(r=> ({r, g:growth(pcLast(r), pcPrev(r))})).sort((a,b)=> b.g-a.g);
+  if(!rows.length) return '';
+  const legH = 30, rowH = 38, labelW = Math.min(230, W*0.3), valW = W<600 ? 52 : 70;
+  const tw = W - labelW - valW*2, cx = labelW + valW + tw/2;
+  const cap = Math.min(300, Math.max(20, ...rows.map(x=> Math.abs(x.g))));
+  const H = legH + rows.length*rowH + 8;
+  let g = `<text x="0" y="18" font-size="12.5" fill="${C.muted}">Growth GMV ${pcEsc(d.labs[d.labs.length-1])} vs ${pcEsc(d.labs[d.labs.length-2])} · urut dari naik tertinggi</text>`;
+  g += `<rect x="${cx-0.75}" y="${legH-4}" width="1.5" height="${rows.length*rowH+8}" fill="${C.line}"/>`;
+  rows.forEach((x, i)=>{
+    const ym = legH + i*rowH + rowH/2, up = x.g>=0, len = Math.max(3, Math.min(1, Math.abs(x.g)/cap)*(tw/2));
+    const nm = `${x.r.shop} · ${x.r.platform}`;
+    g += `<text x="0" y="${ym+5}" font-size="13.5" font-weight="600" fill="${C.ink}">${pcEsc(nm.length>30 ? nm.slice(0,29)+'…' : nm)}</text>`;
+    g += `<rect x="${(up ? cx : cx-len).toFixed(1)}" y="${ym-8}" width="${len.toFixed(1)}" height="16" rx="5" fill="${up?C.up:C.down}"/>`;
+    const lbl = `${up?'+':'−'}${rvPct(x.g)}${Math.abs(x.g)>cap ? ' ›' : ''}`;
+    g += `<text x="${(up ? cx+len+8 : cx-len-8).toFixed(1)}" y="${ym+5}" text-anchor="${up?'start':'end'}" font-size="13" font-weight="800" fill="${up?C.up:C.down}">${lbl}</text>`;
+  });
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" font-family="${FONT}" role="img" aria-label="${pcEsc(pcTitle('growth'))}" style="display:block; width:100%; height:auto; max-width:${W}px;"><rect width="${W}" height="${H}" fill="${C.bg}"/>${g}</svg>`;
+}
+function pcAny(mk, W, forExport){ return mk==='growth' ? pcGrowthSVG(W, forExport) : pcSVG(mk, W, forExport); }
+const PC_TABS = [['gmv','GMV'],['ctr','CTR'],['pcs','Produk terjual'],['growth','Naik & turun']];
+
+function renderCharts(){
+  const wrap = document.getElementById('chartsWrap');
+  if(!wrap) return;
+  const ch = activeTab==='video' ? 'Video' : 'Live';
+  const note = document.querySelector('#chartsCard .toolbar .note');
+  if(note) note.innerHTML = `Grafik <b>${ch}</b> per toko — batang = periode terbaru, garis = periode sebelumnya, urut dari nilai tertinggi`;
+  const st = document.querySelector('#grafik .sec-title'); if(st) st.textContent = `Grafik performa ${ch} per toko`;
+  if(!buildChannelRows(activeTab).length){
+    wrap.innerHTML = `<div class="empty-state"><div class="empty-icon">📊</div>Belum ada data ${ch} untuk ditampilkan sebagai grafik.</div>`; return;
+  }
+  const W = Math.max(340, Math.min(1180, (wrap.clientWidth || 900)));
+  const svg = pcAny(pcMetric, W, false);
+  wrap.innerHTML = `<div class="pc-top"><div class="mchips" role="group" aria-label="Pilih grafik">${PC_TABS.map(([k,t])=> `<button type="button" data-pc="${k}" aria-pressed="${k===pcMetric}">${t}</button>`).join('')}</div></div>
+    <div class="chart-block" data-chart="${pcMetric}"><div class="pc-title">${escapeHtml(pcTitle(pcMetric))}</div>
+    <div class="chart-scroll">${svg || `<div class="empty-state" style="padding:26px">Belum ada periode pembanding untuk grafik ini.</div>`}</div></div>`;
+  wrap.querySelectorAll('[data-pc]').forEach(b=> b.addEventListener('click', ()=>{ pcMetric = b.dataset.pc; renderCharts(); }));
+}
+
+// ---------- download PNG (gaya baru, selalu terang) ----------
+async function pcCanvasFor(keys){
+  await ensureSerifFont();
+  const W = 1150, scale = 3, pad = 36, items = [];
+  for(const k of keys){
+    const s = pcAny(k, W, true); if(!s) continue;
+    const img = await svgStringToImage(s);
+    items.push({k, img, h: img.naturalHeight || img.height, title: pcTitle(k)});
+  }
+  if(!items.length) return null;
+  const ch = activeTab==='video' ? 'Video' : 'Live';
+  const headH = 78, blockHead = 46, gapB = 34;
+  const H = pad + headH + items.reduce((s,x)=> s + blockHead + x.h + gapB, -gapB) + pad;
+  const cv = document.createElement('canvas'); cv.width = (W+pad*2)*scale; cv.height = H*scale;
+  const ctx = cv.getContext('2d'); ctx.scale(scale, scale);
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W+pad*2, H);
+  ctx.fillStyle = '#0B1D26'; ctx.font = '600 24px "Playfair Display", Georgia, serif';
+  ctx.fillText(`Grafik performa ${ch} per toko`, pad, pad+24);
+  ctx.fillStyle = '#E3C46A'; ctx.fillRect(pad, pad+36, 40, 3);
+  ctx.fillStyle = '#5B6B73'; ctx.font = '400 13px -apple-system, Segoe UI, Roboto, sans-serif';
+  ctx.fillText(`${vsText(activeTab)}${filtActive() ? ' · Filter: ' + dkFilterText() : ''}`, pad, pad+60);
+  let y = pad + headH;
+  items.forEach(x=>{
+    ctx.fillStyle = '#0B1D26'; ctx.font = '600 19px "Playfair Display", Georgia, serif';
+    ctx.fillText(x.title, pad, y+26);
+    ctx.drawImage(x.img, pad, y+blockHead, W, x.h);
+    y += blockHead + x.h + gapB;
+  });
+  return cv;
+}
+async function downloadSingleChart(key){
+  const cv = await pcCanvasFor([key]);
+  if(!cv){ alert('Belum ada grafik untuk didownload.'); return; }
+  cv.toBlob(b=> triggerBlobDownload(b, `grafik-${key}-${activeTab}-${new Date().toISOString().slice(0,10)}.png`), 'image/png');
+}
+async function downloadAllCharts(){
+  const cv = await pcCanvasFor(['gmv','growth','ctr','pcs']);
+  if(!cv){ alert('Belum ada grafik untuk didownload.'); return; }
+  cv.toBlob(b=> triggerBlobDownload(b, `grafik-${activeTab}-semua-${new Date().toISOString().slice(0,10)}.png`), 'image/png');
+}
+DL_ACTIONS['chart-growth'] = ()=> withFilter(()=> downloadSingleChart('growth'));
+document.querySelectorAll('.tab').forEach(t=> t.addEventListener('click', ()=> renderCharts()));
+
+// ============================================================
 // PRESENTASI 16:9 — slide digambar di canvas (sama persis di layar, PDF, PPT)
 // Alur: Cover → KPI → Review → Pembatas → Tabel ringkas → Top 10 (3 toko/slide) → Grafik → Rekomendasi
 // ============================================================
@@ -5000,20 +5216,14 @@ async function buildDeckSpecs(){
       title: best ? `${dkShort(shortProductName(best.p.name), 48)} jadi produk terlaris ${best.c.shop} (Rp${formatCompactRp(best.p.gmvIni)})` : `Top 10 produk ${grp.map(c=> c.shop).join(', ')}`,
       draw:(ctx)=> dkDrawTop(ctx, grp, ch)});
   }
-  // grafik (selalu Live)
-  const charts = await dkChartImages();
-  const lr = buildChannelRows('live');
-  const ttl = {
-    gmv: (r)=> `${r.shop} ${r.platform} punya GMV Live tertinggi (Rp${formatCompactRp(r.gmvIni)})`,
-    ctr: (r)=> `CTR Live tertinggi di ${r.shop} ${r.platform} (${fmtPct(r.ctrIni)})`,
-    pcs: (r)=> `${r.shop} ${r.platform} menjual produk terbanyak (${fmtInt(r.produkIni)} pcs)`,
-  };
-  const key = {gmv:'gmvIni', ctr:'ctrIni', pcs:'produkIni'}, nm = {gmv:'GMV', ctr:'CTR', pcs:'Produk terjual'};
-  ['gmv','ctr','pcs'].forEach(k=>{
-    const c = charts[k]; if(!c) return; const t = dkTop(lr, key[k]);
-    S.push({kind:'img', eyebrow:`05 · Grafik ${nm[k]} Live per toko`, title: t ? ttl[k](t) : `Grafik ${nm[k]} Live per toko`,
-      draw:(ctx)=> dkDrawChart(ctx, c)});
-  });
+  // grafik (ikut tab aktif): GMV, Naik & turun, CTR, Produk
+  const nmC = {gmv:'GMV', growth:'Naik & turun GMV', ctr:'CTR', pcs:'Produk terjual'};
+  for(const k of ['gmv','growth','ctr','pcs']){
+    const svg = pcAny(k, 1150, true); if(!svg) continue;
+    const img = await svgStringToImage(svg);
+    const w = 1150, h = img.naturalHeight || img.height;
+    S.push({kind:'img', eyebrow:`05 · Grafik ${nmC[k]} ${ch} per toko`, title: pcTitle(k), draw:(ctx)=> dkBlit(ctx, img, 0, 0, w, h, 1)});
+  }
   if(R && R.recs.length) S.push({kind:'recs', title:`Rekomendasi ${l.monthly ? 'bulan' : 'minggu'} depan`, recs:R.recs, notes:R.notes.filter(n=> /basis/.test(n))});
   return S;
 }
