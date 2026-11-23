@@ -829,34 +829,29 @@ tr.total td:first-child{background:#F7EED3 !important;}
 .slide{display:block;}
 .pres-bar, .pres-brand{display:none;}
 
-/* ---------- MODE PRESENTASI ---------- */
+/* ---------- MODE PRESENTASI (slide 16:9) ---------- */
 html.present body{padding:0; overflow:hidden;}
-html.present .side, html.present .mnav, html.present header.top, html.present .card.lifted, html.present .db-card,
-html.present .fbar, html.present .dl-menu, html.present .toast{display:none !important;}
-html.present .wrap{margin:0; max-width:none; padding:0;}
-html.present .slide{display:none;}
-html.present .slide.cur{display:block; height:100vh; overflow:auto; padding:78px clamp(20px, 4vw, 64px) 96px;}
-html.present .sec-head{margin-top:0;}
-html.present .sec-num{font-size:96px;}
-html.present .sec-title{font-size:36px;}
-html.present .insight li{font-size:15.5px;}
-html.present .pres-brand{display:flex; position:fixed; top:16px; left:clamp(20px, 4vw, 64px); right:clamp(20px, 4vw, 64px); z-index:40; align-items:center; gap:12px;}
-.pres-brand img{width:38px; height:38px; border-radius:10px; background:#fff; padding:5px; object-fit:contain;}
-.pres-brand b{display:block; font-family:var(--serif); font-size:16px; font-weight:600; color:var(--ink); line-height:1.2;}
-.pres-brand small{font-size:11.5px; color:var(--muted);}
-html.present .pres-bar{display:flex; position:fixed; left:50%; bottom:18px; transform:translateX(-50%); z-index:40; align-items:center; gap:6px;
-  padding:6px; border-radius:16px; background:rgba(11,29,38,.92); border:1px solid rgba(255,255,255,.12); box-shadow:0 12px 34px rgba(11,29,38,.35); color:#fff;}
-.pres-bar button{font-family:var(--body); font-size:13px; font-weight:700; color:rgba(255,255,255,.85); background:none; border:none; border-radius:10px; padding:8px 12px; cursor:pointer;}
-.pres-bar button:hover{background:rgba(255,255,255,.08); color:#fff;}
-.pres-bar button:focus-visible{outline:2px solid var(--gold); outline-offset:1px;}
-.pres-bar .nb{font-size:18px; padding:4px 12px; line-height:1;}
-.pres-bar #presCount{font-size:12.5px; font-weight:700; color:var(--gold); min-width:44px; text-align:center; font-variant-numeric:tabular-nums;}
-.pres-bar .sep{width:1px; height:22px; background:rgba(255,255,255,.15); margin:0 4px;}
-.pres-bar .pch{display:flex; background:rgba(255,255,255,.07); border-radius:10px; padding:2px;}
-.pres-bar .pch button{padding:6px 12px;}
-.pres-bar .pch button[aria-pressed="true"]{background:var(--gold); color:var(--navy);}
-.pres-bar .ex{color:#FFB4A8;}
-.pres-dots{display:flex; gap:5px; margin:0 4px;}
+html.present .side, html.present .mnav, html.present .wrap, html.present .bg, html.present .toast:not(.show){display:none !important;}
+#deck{position:fixed; inset:0; z-index:200; background:#081116; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; padding:16px;}
+#deck[hidden]{display:none;}
+.dk-stage{position:relative; flex:1; min-height:0; width:100%; display:flex; align-items:center; justify-content:center;}
+#dkImg{max-width:100%; max-height:100%; aspect-ratio:16/9; object-fit:contain; border-radius:6px; box-shadow:0 20px 60px rgba(0,0,0,.45); background:#fff; cursor:pointer; user-select:none;}
+#dkImg:not([src]), #dkImg[src=""]{visibility:hidden;}
+.dk-load{display:none; position:absolute; inset:0; align-items:center; justify-content:center; gap:12px; color:#C9D3D8; font-size:14px; background:rgba(8,17,22,.6);}
+#deck.loading .dk-load{display:flex;}
+.dk-bar{flex:none; display:flex; align-items:center; gap:6px; padding:6px; border-radius:16px; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1); color:#fff; flex-wrap:wrap; justify-content:center;}
+.dk-bar button{font-family:var(--body); font-size:13px; font-weight:700; color:rgba(255,255,255,.85); background:none; border:none; border-radius:10px; padding:8px 12px; cursor:pointer;}
+.dk-bar button:hover{background:rgba(255,255,255,.08); color:#fff;}
+.dk-bar button:focus-visible{outline:2px solid var(--gold); outline-offset:1px;}
+.dk-bar .nb{font-size:20px; padding:4px 14px; line-height:1;}
+.dk-bar #dkCount{font-size:13px; font-weight:700; color:var(--gold); min-width:54px; text-align:center; font-variant-numeric:tabular-nums;}
+.dk-bar .sep{width:1px; height:22px; background:rgba(255,255,255,.15); margin:0 4px;}
+.dk-bar .pch{display:flex; background:rgba(255,255,255,.07); border-radius:10px; padding:2px;}
+.dk-bar .pch button{padding:6px 12px;}
+.dk-bar .pch button[aria-pressed="true"]{background:var(--gold); color:var(--navy);}
+.dk-bar .ex{color:#FFB4A8;}
+html.present .toast{z-index:300;}
+@media (max-width:640px){ #deck{padding:8px; gap:8px;} .dk-bar .pch, .dk-bar .sep{display:none;} .dk-bar button{padding:7px 9px;} }
 
 /* ---------- responsif ---------- */
 @media (max-width:1180px){
@@ -874,14 +869,10 @@ html.present .pres-bar{display:flex; position:fixed; left:50%; bottom:18px; tran
   .fb-per{display:none;}
   .fb-l{display:none;}
   .insight ul{grid-template-columns:1fr;}
-  html.present .slide.cur{padding:70px 14px 92px;}
-  html.present .sec-num{font-size:60px;}
-  html.present .sec-title{font-size:24px;}
 }
 @media (max-width:520px){
   .bento{gap:10px; grid-auto-rows:auto;}
   .bento .hero .v{font-size:34px;}
-  .pres-bar .pch{display:none;}
 }
 
 /* ================================================================
@@ -943,7 +934,6 @@ html.dark .dbslot .sw2{box-shadow:0 0 0 1px rgba(255,255,255,.35);}
 html.dark .cbadge.part, html.dark .fb-reset, html.dark .db-role{border-color:rgba(251,215,132,.3);}
 html.dark .db-role.view{background:rgba(255,255,255,.06);}
 html.dark .platform-label.tiktok, html.dark .platform-badge.tiktok{background:#2B3A41; box-shadow:inset 0 0 0 1px rgba(255,255,255,.18);}
-html.dark .pres-brand img{box-shadow:0 0 0 1px rgba(255,255,255,.1);}
 html.dark .lite .card, html.dark .lite .glass, html.dark .lite .tabs, html.dark.lite .card, html.dark.lite .glass, html.dark.lite .fbar{background:#0F222B;}
 html.lite .fbar{backdrop-filter:none; -webkit-backdrop-filter:none; background:rgba(255,255,255,.96);}
 html.dark.lite .fbar{background:#0F222B;}
@@ -1170,6 +1160,8 @@ html.present .rv-row{font-size:14.5px;}
     <div class="fb-per" id="fbPer"></div>
     <div class="fb-act">
       <button type="button" class="icon-btn" id="themeBtn" aria-label="Ganti ke mode gelap"></button>
+      <div class="dl-menu"><button type="button" class="btn dl-toggle" aria-haspopup="true" aria-expanded="false">⬇ Slide</button>
+        <div class="dl-pop" role="menu"><button class="dl-item" role="menuitem" data-action="deck-pdf">PDF presentasi <small>semua slide</small></button><button class="dl-item" role="menuitem" data-action="deck-ppt">PowerPoint (PPT) <small>judul bisa diedit</small></button></div></div>
       <button type="button" class="btn primary" data-present><svg class="bi" aria-hidden="true"><use href="#i-play"/></svg>Presentasi</button>
     </div>
     <div class="fb-shops" id="fShops" role="group" aria-label="Pilih toko"></div>
@@ -1288,15 +1280,19 @@ html.present .rv-row{font-size:14.5px;}
   </div>
   </section>
 </div>
-<div class="pres-brand" id="presBrand" aria-hidden="true"><img src="logo.png" alt=""><div><b>Report Builder · Indo Group</b><small id="presPer"></small></div></div>
-<div class="pres-bar" id="presBar" role="toolbar" aria-label="Kontrol presentasi">
-  <button type="button" class="nb" id="presPrev" aria-label="Bagian sebelumnya">‹</button>
-  <span id="presCount" aria-live="polite">1 / 4</span>
-  <button type="button" class="nb" id="presNext" aria-label="Bagian berikutnya">›</button>
-  <span class="sep"></span>
-  <div class="pch" role="group" aria-label="Channel"><button type="button" data-pch="live" aria-pressed="true">Live</button><button type="button" data-pch="video" aria-pressed="false">Video</button></div>
-  <span class="sep"></span>
-  <button type="button" class="ex" id="presExit">Keluar (Esc)</button>
+<div id="deck" hidden role="dialog" aria-label="Presentasi">
+  <div class="dk-stage"><img id="dkImg" alt=""><div class="dk-load"><span class="gate-spin"></span>Menyiapkan slide…</div></div>
+  <div class="dk-bar" role="toolbar" aria-label="Kontrol presentasi">
+    <button type="button" class="nb" id="dkPrev" aria-label="Slide sebelumnya">‹</button>
+    <span id="dkCount" aria-live="polite">1 / 1</span>
+    <button type="button" class="nb" id="dkNext" aria-label="Slide berikutnya">›</button>
+    <span class="sep"></span>
+    <div class="pch" role="group" aria-label="Channel"><button type="button" data-pch="live" aria-pressed="true">Live</button><button type="button" data-pch="video" aria-pressed="false">Video</button></div>
+    <span class="sep"></span>
+    <button type="button" data-dk="pdf">⬇ PDF</button><button type="button" data-dk="ppt">⬇ PPT</button>
+    <span class="sep"></span>
+    <button type="button" class="ex" id="dkExit">Keluar (Esc)</button>
+  </div>
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
@@ -2414,7 +2410,7 @@ const SERIES_COLORS = {2:['#0B1D26','#E3C46A'], 3:['#0B1D26','#5B7684','#E3C46A'
 function buildMultiBarChartSVG(rows, series, fmt){
   const C = CHART_COLORS;
   const n = series.length;
-  const cw = (document.getElementById('chartsWrap')||{}).clientWidth || 780;
+  const cw = window.__chartW || (document.getElementById('chartsWrap')||{}).clientWidth || 780;
   const width = Math.max(620, Math.min(1180, cw)), padLeft = 150, padRight = 96, padTop = 40, padBottom = 14;
   const barH = n<=2 ? 19 : (n===3 ? 15 : 13), pairGap = 3, groupGap = 24;
   const groupH = barH*n + pairGap*(n-1) + groupGap;
@@ -2468,7 +2464,7 @@ function buildMultiBarChartSVG(rows, series, fmt){
 
 function buildVerticalBarChartSVG(rows, fmt){
   const C = CHART_COLORS;
-  const cw = (document.getElementById('chartsWrap')||{}).clientWidth || 780;
+  const cw = window.__chartW || (document.getElementById('chartsWrap')||{}).clientWidth || 780;
   const width = Math.max(620, Math.min(1180, cw)), padLeft = 150, padRight = 96, padTop = 40, padBottom = 14;
   const barH = 19, pairGap = 3, groupGap = 24;
   const groupH = barH*2 + pairGap + groupGap;
@@ -4520,65 +4516,9 @@ function setTheme(dark, persist){
   const tb = document.getElementById('themeBtn'); if(tb) tb.addEventListener('click', flip);
 })();
 
-// ---------- mode presentasi ----------
-const slides = [...document.querySelectorAll('.slide')];
-let presIdx = 0;
-function presBrandText(){
-  const el = document.getElementById('presPer'); if(!el) return;
-  const l = L();
-  const parts = [`${activeTab==='video'?'Video':'Live'} · ${l.monthly?'Bulanan':'Mingguan'}`, vsText(activeTab)];
-  if(filtActive()) parts.push('Filter: ' + [filt.plat!=='all'?filt.plat:'', filt.shops.size?shopFilterText():''].filter(Boolean).join(' · '));
-  el.textContent = parts.join(' — ');
-}
-function syncPresCh(){
-  document.querySelectorAll('#presBar [data-pch]').forEach(b=> b.setAttribute('aria-pressed', String(b.dataset.pch===activeTab)));
-  presBrandText();
-}
-function presShow(i){
-  presIdx = Math.max(0, Math.min(slides.length-1, i));
-  slides.forEach((s,j)=> s.classList.toggle('cur', j===presIdx));
-  const s = slides[presIdx]; if(s) s.scrollTop = 0;
-  if(s){ const d = s.querySelector('details.rv'); if(d) d.open = true; }
-  const c = document.getElementById('presCount'); if(c) c.textContent = `${presIdx+1} / ${slides.length}`;
-  if(s && s.querySelector('#chartsWrap')) requestAnimationFrame(()=>{ lastChartW = 0; renderCharts(); });
-}
-function presEnter(){
-  // mulai dari bagian yang sedang dilihat
-  let start = 0;
-  slides.forEach((s,j)=>{ if(s.getBoundingClientRect().top < window.innerHeight*0.4) start = j; });
-  document.documentElement.classList.add('present');
-  syncPresCh();
-  presShow(start);
-  const de = document.documentElement;
-  if(de.requestFullscreen && !document.fullscreenElement){ de.requestFullscreen().catch(()=>{}); }
-}
-function presExit(){
-  if(!document.documentElement.classList.contains('present')) return;
-  const target = slides[presIdx];
-  document.documentElement.classList.remove('present');
-  slides.forEach(s=> s.classList.remove('cur'));
-  if(document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(()=>{});
-  requestAnimationFrame(()=>{
-    lastChartW = 0; renderCharts();
-    if(target) window.scrollTo({top: target.getBoundingClientRect().top + window.scrollY - 70});
-  });
-}
-document.querySelectorAll('[data-present]').forEach(b=> b.addEventListener('click', presEnter));
-document.getElementById('presPrev').addEventListener('click', ()=> presShow(presIdx-1));
-document.getElementById('presNext').addEventListener('click', ()=> presShow(presIdx+1));
-document.getElementById('presExit').addEventListener('click', presExit);
-document.querySelectorAll('#presBar [data-pch]').forEach(b=> b.addEventListener('click', ()=>{
-  const t = document.querySelector(`.tab[data-tab="${b.dataset.pch}"]`); if(t) t.click();
-  const s = slides[presIdx]; if(s && s.querySelector('#chartsWrap')) renderCharts();
-}));
-document.addEventListener('keydown', (e)=>{
-  if(!document.documentElement.classList.contains('present')) return;
-  if(e.target && /^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName)) return;
-  if(e.key==='ArrowRight' || e.key==='PageDown'){ e.preventDefault(); presShow(presIdx+1); }
-  else if(e.key==='ArrowLeft' || e.key==='PageUp'){ e.preventDefault(); presShow(presIdx-1); }
-  else if(e.key==='Escape'){ presExit(); }
-});
-document.addEventListener('fullscreenchange', ()=>{ if(!document.fullscreenElement) presExit(); });
+// ---------- mode presentasi: lihat modul DECK (slide 16:9) ----------
+function presBrandText(){}
+function syncPresCh(){}
 
 
 // ============================================================
@@ -4768,21 +4708,21 @@ function drawReviewImage(R){
     const x = M + ci*(cW+28);
     font(700, 15); ctx.fillStyle = C.goldInk; try{ ctx.letterSpacing = '2px'; }catch(e){}
     ctx.fillText(s.p.toUpperCase(), x, sTop+8); try{ ctx.letterSpacing = '0px'; }catch(e){}
-    const avail = sBot - (sTop+24), rowH = Math.min(74, Math.max(48, avail/Math.max(1, s.items.length)));
+    const avail = sBot - (sTop+24), rowH = Math.min(R.recs.length ? 74 : 104, Math.max(48, avail/Math.max(1, s.items.length)));
     const maxRows = Math.floor(avail/rowH), items = s.items.slice(0, maxRows - (s.items.length>maxRows ? 1 : 0));
     items.forEach((d, j)=>{
       const y = sTop + 24 + j*rowH;
       ctx.fillStyle = C.line; ctx.fillRect(x, y, cW, 1.5);
-      const big = rowH>=62;
-      font(700, big?20:17); ctx.fillStyle = C.ink; ctx.fillText(fit(d.r.shop, 200), x, y+(big?30:24));
-      const pw = pill(x+212, y+(big?24:19), d.g, big?15:13);
-      font(700, big?18:15); ctx.fillStyle = C.ink; ctx.fillText(rvRp(d.r.gmvIni), x+212+pw+12, y+(big?30:24));
+      const big = rowH>=62, huge = rowH>=90;
+      font(700, huge?24:big?20:17); ctx.fillStyle = C.ink; ctx.fillText(fit(d.r.shop, 236), x, y+(huge?38:big?30:24));
+      const pw = pill(x+248, y+(huge?30:big?24:19), d.g, huge?17:big?15:13);
+      font(700, huge?22:big?18:15); ctx.fillStyle = C.ink; ctx.fillText(rvRp(d.r.gmvIni), x+248+pw+12, y+(huge?38:big?30:24));
       const tg = RV_TAG[d.key]; font(700, 13); const tw = ctx.measureText(tg.t).width + 18;
-      rr(x+cW-tw, y+(big?12:8), tw, 24, 12); ctx.fillStyle = TAGC[tg.c][0]; ctx.fill();
-      ctx.fillStyle = TAGC[tg.c][1]; ctx.fillText(tg.t, x+cW-tw+9, y+(big?29:25));
-      font(400, big?16:14); ctx.fillStyle = C.muted;
-      if(big) ctx.fillText(fit(d.d, cW), x, y+56);
-      else { const off = 212+pw+12+110; ctx.fillText(fit(d.d, cW-off-tw-12), x+off, y+24); }
+      rr(x+cW-tw, y+(huge?18:big?12:8), tw, 24, 12); ctx.fillStyle = TAGC[tg.c][0]; ctx.fill();
+      ctx.fillStyle = TAGC[tg.c][1]; ctx.fillText(tg.t, x+cW-tw+9, y+(huge?35:big?29:25));
+      font(400, huge?19:big?16:14); ctx.fillStyle = C.muted;
+      if(big) ctx.fillText(fit(d.d, cW), x, y+(huge?72:56));
+      else { const off = 248+pw+12+110; ctx.fillText(fit(d.d, cW-off-tw-12), x+off, y+24); }
     });
     if(s.items.length>items.length){ font(400, 14); ctx.fillStyle = C.muted; ctx.fillText(`+${s.items.length-items.length} toko lainnya`, x, sTop+24+items.length*rowH+24); }
   });
@@ -4817,6 +4757,478 @@ window.renderReview = (function(orig){ return function(){ return withFilter(orig
   window.renderKPI = function(){ const r = rk.apply(this, arguments); renderReview(); return r; };
 })();
 renderReview();
+
+// ============================================================
+// PRESENTASI 16:9 — slide digambar di canvas (sama persis di layar, PDF, PPT)
+// Alur: Cover → KPI → Review → Pembatas → Tabel ringkas → Top 10 (3 toko/slide) → Grafik → Rekomendasi
+// ============================================================
+const DK = {W:1920, H:1080, S:2, X:96, BT:228, BB:1080-104};
+const DKC = {ink:'#0B1D26', muted:'#5B6B73', line:'#E6E1D6', card:'#FAF8F3', navy:'#0B1D26', gold:'#E3C46A', goldL:'#FBD784', goldInk:'#8C6B14',
+  cream:'#F6F2E8', up:'#2F7A55', upBg:'#E3F1E9', down:'#B0413E', downBg:'#F8E4E2', naBg:'#EEF0F1', shopee:'#EE4D2D', tiktok:'#111111'};
+const DK_SANS = '-apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif', DK_SERIF = '"Playfair Display", Georgia, serif';
+let deck = {slides:[], idx:0, busy:false, tab:null};
+let dkLogo = null;
+function dkLoadLogo(){
+  if(dkLogo) return Promise.resolve(dkLogo);
+  return new Promise(res=>{ const im = new Image(); im.onload = ()=>{ dkLogo = im; res(im); }; im.onerror = ()=> res(null); im.src = 'logo.png'; });
+}
+function dkNew(bg){
+  const cv = document.createElement('canvas'); cv.width = DK.W*DK.S; cv.height = DK.H*DK.S;
+  const ctx = cv.getContext('2d'); ctx.scale(DK.S, DK.S); ctx.fillStyle = bg; ctx.fillRect(0,0,DK.W,DK.H);
+  ctx.textBaseline = 'alphabetic'; return {cv, ctx};
+}
+const dkF = (ctx, w, sz, fam=DK_SANS)=> ctx.font = `${w} ${sz}px ${fam}`;
+const dkLS = (ctx, px)=>{ try{ ctx.letterSpacing = px+'px'; }catch(e){} };
+function dkRR(ctx,x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+function dkFit(ctx, t, w){ t = String(t); if(ctx.measureText(t).width<=w) return t; while(t.length>1 && ctx.measureText(t+'…').width>w) t = t.slice(0,-1); return t+'…'; }
+function dkWrap(ctx, t, w, maxLines){
+  const words = String(t).split(/\s+/), lines = []; let line = '';
+  words.forEach(wd=>{ const tt = line ? line+' '+wd : wd; if(ctx.measureText(tt).width<=w || !line) line = tt; else { lines.push(line); line = wd; } });
+  if(line) lines.push(line);
+  if(lines.length>maxLines){ const keep = lines.slice(0, maxLines); keep[maxLines-1] = dkFit(ctx, lines.slice(maxLines-1).join(' '), w); return keep; }
+  return lines;
+}
+function dkPill(ctx, x, ym, g, sz=18, suffix='%'){
+  const txt = (g===null||g===undefined||!isFinite(g)) ? '—' : `${g>=0?'▲':'▼'} ${suffix==='%' ? rvPct(g) : Math.abs(g).toFixed(2).replace('.',',')+suffix}`;
+  dkF(ctx, 800, sz); const w = ctx.measureText(txt).width + 22, h = sz+14;
+  const na = txt==='—';
+  dkRR(ctx, x, ym-h/2, w, h, h/2); ctx.fillStyle = na ? DKC.naBg : g>=0 ? DKC.upBg : DKC.downBg; ctx.fill();
+  ctx.fillStyle = na ? DKC.muted : g>=0 ? DKC.up : DKC.down; ctx.textBaseline = 'middle'; ctx.fillText(txt, x+11, ym+1); ctx.textBaseline = 'alphabetic';
+  return w;
+}
+function dkPeriodText(){
+  const l = L();
+  const ds = uploaded.map(f=> f.periodStart).filter(d=> d && d!=='0000-00-00').sort();
+  const yr = ds.length ? ds[ds.length-1].slice(0,4) : '';
+  return `${l.monthly?'Bulanan':'Mingguan'} · ${vsText(activeTab)}${yr && !/\d{4}/.test(vsText(activeTab)) ? ' '+yr : ''}`;
+}
+function dkFilterText(){
+  if(!filtActive()) return '';
+  return [filt.plat!=='all' ? filt.plat : '', filt.shops.size ? shopFilterText() : ''].filter(Boolean).join(' · ');
+}
+function dkFooterText(){
+  const ch = activeTab==='video' ? 'Video' : 'Live';
+  const f = dkFilterText();
+  return `Indo Group · ${ch} · ${dkPeriodText()}${f ? ' · Filter: '+f : ''}`;
+}
+// bingkai slide isi: eyebrow + judul (kesimpulan) + footer kecil
+function dkFrame(ctx, s, page, total, noText){
+  if(!noText){
+    ctx.fillStyle = DKC.gold; ctx.fillRect(DK.X, 92, 40, 3);
+    dkF(ctx, 700, 19); dkLS(ctx, 3); ctx.fillStyle = DKC.goldInk; ctx.fillText(dkFit(ctx, s.eyebrow.toUpperCase(), DK.W-2*DK.X-60), DK.X+56, 100); dkLS(ctx, 0);
+    let sz = 50; dkF(ctx, 600, sz, DK_SERIF);
+    while(sz>36 && ctx.measureText(s.title).width > DK.W-2*DK.X){ sz -= 2; dkF(ctx, 600, sz, DK_SERIF); }
+    ctx.fillStyle = DKC.ink; ctx.fillText(dkFit(ctx, s.title, DK.W-2*DK.X), DK.X, 172);
+  }
+  ctx.fillStyle = DKC.line; ctx.fillRect(DK.X, DK.H-72, DK.W-2*DK.X, 1.5);
+  dkF(ctx, 400, 17); ctx.fillStyle = '#93A0A6'; ctx.fillText(dkFit(ctx, dkFooterText(), DK.W-2*DK.X-140), DK.X, DK.H-38);
+  ctx.textAlign = 'right'; dkF(ctx, 700, 17); ctx.fillText(`${page} / ${total}`, DK.W-DK.X, DK.H-38); ctx.textAlign = 'left';
+}
+// tempel potongan canvas lain ke area isi slide (ditengahkan, proporsional)
+function dkBlit(ctx, src, sx, sy, sw, sh, srcScale){
+  const bw = DK.W-2*DK.X, bh = DK.BB-DK.BT, k = Math.min(bw/sw, bh/sh);
+  const dw = sw*k, dh = sh*k, dx = DK.X + (bw-dw)/2, dy = DK.BT + (bh-dh)/2;
+  ctx.drawImage(src, sx*srcScale, sy*srcScale, sw*srcScale, sh*srcScale, dx, dy, dw, dh);
+}
+
+// ---------- isi slide ----------
+function dkDrawTable(ctx, rows, totals){
+  const l = L();
+  const cols = [
+    {t:'Toko', w:330, a:'l'}, {t:relabel('GMV Ini'), w:200}, {t:relabel('GMV Lalu'), w:200}, {t:'Growth', w:150, a:'c'},
+    {t:relabel('Produk Ini'), w:150}, {t:'Growth', w:150, a:'c'}, {t:'CTR', w:120}, {t:'Δ CTR', w:150, a:'c'}, {t:'CVR', w:120}, {t:'Δ CVR', w:150, a:'c'},
+  ];
+  const tw = cols.reduce((s,c)=> s+c.w, 0), x0 = DK.X + (DK.W-2*DK.X-tw)/2;
+  const n = rows.length + (totals ? 1 : 0), headH = 50;
+  const rh = Math.max(38, Math.min(60, (DK.BB-DK.BT-headH)/Math.max(1,n)));
+  const fs = rh>=50 ? 20 : rh>=44 ? 18 : 16;
+  let y = DK.BT;
+  dkRR(ctx, x0, y, tw, headH, 10); ctx.fillStyle = DKC.cream; ctx.fill();
+  ctx.fillStyle = DKC.gold; ctx.fillRect(x0, y+headH-3, tw, 3);
+  let cx = x0; dkF(ctx, 700, 15); dkLS(ctx, 1); ctx.fillStyle = DKC.ink;
+  cols.forEach(c=>{ const t = dkFit(ctx, c.t.toUpperCase(), c.w-24); ctx.textAlign = c.a==='l'?'left':c.a==='c'?'center':'right';
+    ctx.fillText(t, c.a==='l' ? cx+16 : c.a==='c' ? cx+c.w/2 : cx+c.w-16, y+32); cx += c.w; });
+  dkLS(ctx, 0); ctx.textAlign = 'left';
+  y += headH;
+  const line = (r, isTot, i)=>{
+    if(isTot){ ctx.fillStyle = '#F7EED3'; ctx.fillRect(x0, y, tw, rh); ctx.fillStyle = DKC.navy; ctx.fillRect(x0, y, tw, 2); }
+    else if(i%2){ ctx.fillStyle = DKC.card; ctx.fillRect(x0, y, tw, rh); }
+    ctx.fillStyle = DKC.line; ctx.fillRect(x0, y+rh-1, tw, 1);
+    const ym = y + rh/2; let cx = x0;
+    ctx.textBaseline = 'middle';
+    // toko
+    if(isTot){ dkF(ctx, 800, fs); ctx.fillStyle = DKC.ink; ctx.fillText('Total', cx+16, ym); }
+    else {
+      const pl = r.platform, pw = pl==='Shopee' ? 86 : 78;
+      dkRR(ctx, cx+16, ym-12, pw, 24, 6); ctx.fillStyle = pl==='Shopee' ? DKC.shopee : DKC.tiktok; ctx.fill();
+      dkF(ctx, 800, 12); dkLS(ctx, 1); ctx.fillStyle = '#fff'; ctx.fillText(pl.toUpperCase(), cx+16+10, ym+1); dkLS(ctx, 0);
+      dkF(ctx, 700, fs); ctx.fillStyle = DKC.ink; ctx.fillText(dkFit(ctx, r.shop, cols[0].w-pw-40), cx+16+pw+12, ym);
+    }
+    cx += cols[0].w;
+    const num = (t, c, bold)=>{ dkF(ctx, bold?800:500, fs); ctx.fillStyle = DKC.ink; ctx.textAlign = 'right'; ctx.fillText(t, cx+c.w-16, ym); ctx.textAlign = 'left'; cx += c.w; };
+    const pill = (g, c, suf)=>{ dkF(ctx, 800, fs-4); const t = (g===null||!isFinite(g)) ? '—' : `${g>=0?'▲':'▼'} ${suf ? Math.abs(g).toFixed(2).replace('.',',')+suf : rvPct(g)}`;
+      const w = ctx.measureText(t).width + 20; ctx.textBaseline = 'alphabetic'; dkPill(ctx, cx + (c.w-w)/2, ym, g, fs-4, suf||'%'); ctx.textBaseline = 'middle'; cx += c.w; };
+    const d = (a, b)=> (a===null||a===undefined||b===null||b===undefined) ? null : a-b;
+    num(fmtInt(r.gmvIni), cols[1], isTot); num(r.gmvLalu===null?'—':fmtInt(r.gmvLalu), cols[2], isTot); pill(growth(r.gmvIni, r.gmvLalu), cols[3]);
+    num(fmtInt(r.produkIni), cols[4], isTot); pill(growth(r.produkIni, r.produkLalu), cols[5]);
+    num(fmtPct(r.ctrIni), cols[6], isTot); pill(d(r.ctrIni, r.ctrLalu), cols[7], ' poin');
+    num(fmtPct(r.cvrIni), cols[8], isTot); pill(d(r.cvrIni, r.cvrLalu), cols[9], ' poin');
+    ctx.textBaseline = 'alphabetic';
+    y += rh;
+  };
+  rows.forEach((r,i)=> line(r, false, i));
+  if(totals) line(totals, true, 0);
+}
+function dkTotals(rows){
+  const s = (k)=> rows.reduce((a,r)=> a+(r[k]||0), 0);
+  const comp = rows.filter(r=> !r.incomplete);
+  const sc = (k)=> comp.reduce((a,r)=> a+(r[k]||0), 0);
+  const ratio = (a,b)=> b ? a/b*100 : null;
+  return {gmvIni:s('gmvIni'), gmvLalu: comp.length ? sc('gmvLalu') : null, produkIni:s('produkIni'), produkLalu: comp.length ? sc('produkLalu') : null,
+    ctrIni: ratio(s('klikIni2'), s('impresiIni')), ctrLalu: comp.length ? ratio(sc('klikLalu2'), sc('impresiLalu')) : null,
+    cvrIni: ratio(s('pesananIni'), s('klikIni')), cvrLalu: comp.length ? ratio(sc('pesananLalu'), sc('klikLalu')) : null};
+}
+function dkDrawTop(ctx, cards, label){
+  const n = cards.length, gap = 32, cw = (DK.W-2*DK.X-(n-1)*gap)/3, x0 = DK.X + (DK.W-2*DK.X - (n*cw+(n-1)*gap))/2;
+  const h = DK.BB-DK.BT;
+  cards.forEach((c, i)=>{
+    const x = x0 + i*(cw+gap), y = DK.BT;
+    dkRR(ctx, x, y, cw, h, 18); ctx.fillStyle = DKC.card; ctx.fill(); ctx.strokeStyle = DKC.line; ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.save(); dkRR(ctx, x, y, cw, 74, 18); ctx.clip(); ctx.fillStyle = DKC.navy; ctx.fillRect(x, y, cw, 74); ctx.restore();
+    ctx.fillStyle = DKC.gold; ctx.fillRect(x, y+72, cw, 3);
+    dkF(ctx, 600, 28, DK_SERIF); ctx.fillStyle = '#fff'; ctx.fillText(dkFit(ctx, c.shop, cw-210), x+24, y+48);
+    dkF(ctx, 600, 15); ctx.fillStyle = DKC.goldL; ctx.textAlign = 'right'; ctx.fillText(`GMV toko Rp${formatCompactRp(c.shopGmv)}`, x+cw-24, y+46); ctx.textAlign = 'left';
+    const list = c.top.slice(0, 10), rh = (h-74-20)/10;
+    const maxG = Math.max(1, ...list.map(p=> p.gmvIni));
+    list.forEach((p, j)=>{
+      const ry = y + 84 + j*rh, ym = ry + rh/2;
+      if(j) { ctx.fillStyle = DKC.line; ctx.fillRect(x+20, ry, cw-40, 1); }
+      ctx.beginPath(); ctx.arc(x+38, ym-4, 15, 0, Math.PI*2); ctx.fillStyle = j<3 ? DKC.navy : '#E9E4D8'; ctx.fill();
+      dkF(ctx, 800, 14); ctx.fillStyle = j<3 ? DKC.goldL : DKC.navy; ctx.textAlign = 'center'; ctx.fillText(String(j+1), x+38, ym+1); ctx.textAlign = 'left';
+      dkF(ctx, 600, 17); ctx.fillStyle = DKC.ink;
+      const gx = x+cw-20, nameW = cw - 66 - 200;
+      ctx.fillText(dkFit(ctx, shortProductName(p.name), nameW), x+64, ym-6);
+      // batang kecil + pcs
+      const bw = nameW*Math.max(.04, p.gmvIni/maxG);
+      dkRR(ctx, x+64, ym+5, nameW, 6, 3); ctx.fillStyle = '#ECE8DF'; ctx.fill();
+      dkRR(ctx, x+64, ym+5, bw, 6, 3); ctx.fillStyle = j<3 ? DKC.gold : '#5B7684'; ctx.fill();
+      dkF(ctx, 800, 17); ctx.fillStyle = DKC.ink; ctx.textAlign = 'right'; ctx.fillText('Rp'+formatCompactRp(p.gmvIni), gx, ym-6); ctx.textAlign = 'left';
+      const g = !c.has2 ? null : (p.gmvLalu>0 ? growth(p.gmvIni, p.gmvLalu) : 'new');
+      dkF(ctx, 800, 13);
+      if(g==='new'){ const t = 'Baru', w = ctx.measureText(t).width+18; dkRR(ctx, gx-w, ym+4, w, 22, 11); ctx.fillStyle = DKC.goldL; ctx.fill(); ctx.fillStyle = DKC.navy; ctx.fillText(t, gx-w+9, ym+20); }
+      else { const t = g===null ? '—' : `${g>=0?'▲':'▼'} ${rvPct(g)}`; const w = ctx.measureText(t).width+18;
+        dkRR(ctx, gx-w, ym+4, w, 22, 11); ctx.fillStyle = g===null ? DKC.naBg : g>=0 ? DKC.upBg : DKC.downBg; ctx.fill();
+        ctx.fillStyle = g===null ? DKC.muted : g>=0 ? DKC.up : DKC.down; ctx.fillText(t, gx-w+9, ym+20); }
+      dkF(ctx, 400, 13); ctx.fillStyle = DKC.muted; ctx.textAlign = 'right'; ctx.fillText(`${fmtInt(p.pcsIni)} pcs`, gx-130, ym+20); ctx.textAlign = 'left';
+    });
+    if(!list.length){ dkF(ctx, 400, 18); ctx.fillStyle = DKC.muted; ctx.fillText('Belum ada produk dengan GMV.', x+24, y+130); }
+  });
+}
+async function dkChartImages(){
+  const out = {};
+  const dark = isDark();
+  window.__chartW = 620;
+  if(dark) setChartTheme(false);
+  try{
+    renderCharts();
+    for(const k of ['gmv','ctr','pcs']){
+      const el = document.querySelector(`.chart-block[data-chart="${k}"] svg`);
+      if(!el) continue;
+      const vb = el.viewBox.baseVal;
+      const str = new XMLSerializer().serializeToString(el);
+      out[k] = {img: await svgStringToImage(str), w:vb.width, h:vb.height, n:(str.match(/<circle cx="16"/g)||[]).length};
+    }
+  } finally {
+    window.__chartW = 0;
+    if(dark) setChartTheme(true);
+    renderCharts();
+  }
+  return out;
+}
+// grafik dipecah dua kolom (skala sama) supaya huruf tetap besar di slide
+function dkDrawChart(ctx, c){
+  const n = Math.max(1, c.n), groupH = (c.h - 40 - 14 + 12)/n;
+  if(n<=6){ dkBlit(ctx, c.img, 0, 0, c.w, c.h, 1); return; }
+  const half = Math.ceil(n/2), gap = 48, colW = (DK.W-2*DK.X-gap)/2;
+  const legH = 30, rowsH = half*groupH;
+  const k = Math.min(colW/c.w, (DK.BB-DK.BT-legH*1.2)/(rowsH+legH));
+  const dw = c.w*k, x0 = DK.X + (DK.W-2*DK.X - (2*dw+gap))/2;
+  [0,1].forEach(j=>{
+    const x = x0 + j*(dw+gap);
+    ctx.drawImage(c.img, 0, 0, c.w, legH, x, DK.BT, dw, legH*k);
+    const sy = 40 - 12 + j*half*groupH, sh = Math.min(rowsH, c.h - 14 - sy + 4);
+    if(sh>0) ctx.drawImage(c.img, 0, sy, c.w, sh, x, DK.BT + legH*k + 6, dw, sh*k);
+  });
+}
+function dkTop(rows, k){ return [...rows].filter(r=> r[k]!==null && r[k]!==undefined).sort((a,b)=> b[k]-a[k])[0]; }
+
+// ---------- susun daftar slide ----------
+async function buildDeckSpecs(){
+  await ensureSerifFont(); await dkLoadLogo();
+  const ch = activeTab==='video' ? 'Video' : 'Live', l = L();
+  const S = [];
+  S.push({kind:'cover', ch});
+  const rows = buildChannelRows(activeTab);
+  if(!rows.length) return S;
+  // KPI
+  if(kpiCache){
+    const K = kpiCache, R0 = buildReview();
+    let t = `GMV ${ch} ${K.gG===null||!isFinite(K.gG) ? '' : (K.gG>=0?'naik ':'turun ') + rvPct(K.gG) + ' '}ke Rp${formatCompactRp(K.gmvIni)}`;
+    if(R0 && R0.driver && R0.plats.length>1) t += K.gG>=0 ? `, didorong ${R0.driver.p}` : `, terutama dari ${R0.driver.p}`;
+    S.push({kind:'img', eyebrow:`01 · Ringkasan KPI ${ch}`, title:t, draw:(ctx)=>{ const src = drawKPIImage(); dkBlit(ctx, src, 40, 180, 1840, 860, 2); }});
+  }
+  const R = buildReview();
+  if(R){
+    S.push({kind:'img', eyebrow:`02 · Review performa ${ch}`, title: R.nProb ? `${R.nProb} toko perlu perhatian, ${R.nOk} tumbuh sehat` : 'Semua toko yang dibandingkan dalam kondisi baik',
+      draw:(ctx)=>{ const src = drawReviewImage(Object.assign({}, R, {recs:[]})); dkBlit(ctx, src, 40, 208, 1840, 832, 2); }});
+  }
+  S.push({kind:'divider', num:'03', title:'Performa per toko', sub:'Tabel ringkas · Top 10 produk · Grafik'});
+  // tabel ringkas (dipecah kalau baris terlalu banyak)
+  const sorted = [...rows].sort((a,b)=> (b.gmvIni||0)-(a.gmvIni||0));
+  const top = sorted[0];
+  const per = 15, chunks = [];
+  for(let i=0;i<sorted.length;i+=per) chunks.push(sorted.slice(i, i+per));
+  chunks.forEach((c, i)=> S.push({kind:'img', eyebrow:`03 · Tabel per toko ${ch}${chunks.length>1 ? ` (${i+1}/${chunks.length})` : ''}`,
+    title:`${top.shop} ${top.platform} jadi penyumbang GMV terbesar (Rp${formatCompactRp(top.gmvIni)})`,
+    draw:(ctx)=> dkDrawTable(ctx, c, i===chunks.length-1 ? dkTotals(rows) : null)}));
+  // Top 10 TikTok, 3 toko per slide
+  const cards = buildTopProducts(activeTab);
+  for(let i=0;i<cards.length;i+=3){
+    const grp = cards.slice(i, i+3);
+    const best = grp.map(c=> ({c, p:c.top[0]})).filter(x=> x.p).sort((a,b)=> b.p.gmvIni-a.p.gmvIni)[0];
+    S.push({kind:'img', eyebrow:`04 · Top 10 produk TikTok ${ch}${cards.length>3 ? ` (${i/3+1}/${Math.ceil(cards.length/3)})` : ''}`,
+      title: best ? `${dkShort(shortProductName(best.p.name), 48)} jadi produk terlaris ${best.c.shop} (Rp${formatCompactRp(best.p.gmvIni)})` : `Top 10 produk ${grp.map(c=> c.shop).join(', ')}`,
+      draw:(ctx)=> dkDrawTop(ctx, grp, ch)});
+  }
+  // grafik (selalu Live)
+  const charts = await dkChartImages();
+  const lr = buildChannelRows('live');
+  const ttl = {
+    gmv: (r)=> `${r.shop} ${r.platform} punya GMV Live tertinggi (Rp${formatCompactRp(r.gmvIni)})`,
+    ctr: (r)=> `CTR Live tertinggi di ${r.shop} ${r.platform} (${fmtPct(r.ctrIni)})`,
+    pcs: (r)=> `${r.shop} ${r.platform} menjual produk terbanyak (${fmtInt(r.produkIni)} pcs)`,
+  };
+  const key = {gmv:'gmvIni', ctr:'ctrIni', pcs:'produkIni'}, nm = {gmv:'GMV', ctr:'CTR', pcs:'Produk terjual'};
+  ['gmv','ctr','pcs'].forEach(k=>{
+    const c = charts[k]; if(!c) return; const t = dkTop(lr, key[k]);
+    S.push({kind:'img', eyebrow:`05 · Grafik ${nm[k]} Live per toko`, title: t ? ttl[k](t) : `Grafik ${nm[k]} Live per toko`,
+      draw:(ctx)=> dkDrawChart(ctx, c)});
+  });
+  if(R && R.recs.length) S.push({kind:'recs', title:`Rekomendasi ${l.monthly ? 'bulan' : 'minggu'} depan`, recs:R.recs, notes:R.notes.filter(n=> /basis/.test(n))});
+  return S;
+}
+function dkShort(t, n){ t = String(t); return t.length>n ? t.slice(0, n-1).trim()+'…' : t; }
+
+// ---------- gambar slide ----------
+function dkRender(s, page, total, noText){
+  if(s.kind==='cover'){
+    const {cv, ctx} = dkNew(DKC.navy);
+    ctx.strokeStyle = 'rgba(251,215,132,.07)'; ctx.lineWidth = 90; ctx.beginPath(); ctx.arc(DK.W-180, 150, 380, 0, Math.PI*2); ctx.stroke();
+    ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(251,215,132,.18)'; ctx.beginPath(); ctx.arc(DK.W-180, 150, 520, 0, Math.PI*2); ctx.stroke();
+    if(!noText){
+      dkRR(ctx, 120, 110, 84, 84, 20); ctx.fillStyle = '#fff'; ctx.fill();
+      if(dkLogo) ctx.drawImage(dkLogo, 130, 120, 64, 64);
+      dkF(ctx, 700, 22); dkLS(ctx, 5); ctx.fillStyle = DKC.goldL; ctx.fillText('INDO GROUP', 232, 162); dkLS(ctx, 0);
+      dkF(ctx, 600, 104, DK_SERIF); ctx.fillStyle = '#fff'; ctx.fillText('Review Performa', 120, 560); ctx.fillText(s.ch, 120, 684);
+      ctx.fillStyle = DKC.goldL; ctx.fillRect(120, 730, 72, 4);
+      dkF(ctx, 400, 30); ctx.fillStyle = '#C9D3D8'; ctx.fillText(dkPeriodText(), 120, 800);
+      const f = dkFilterText(); if(f){ dkF(ctx, 400, 22); ctx.fillStyle = '#8FA3AC'; ctx.fillText('Filter: '+f, 120, 846); }
+    }
+    return cv;
+  }
+  if(s.kind==='divider'){
+    const {cv, ctx} = dkNew(DKC.cream);
+    if(!noText){
+      dkF(ctx, 700, 300, DK_SERIF); ctx.fillStyle = '#E4DDCC'; ctx.fillText(s.num, 160, 650);
+      const x = 160 + ctx.measureText(s.num).width + 60;
+      ctx.fillStyle = DKC.gold; ctx.fillRect(x, 452, 40, 3);
+      dkF(ctx, 700, 20); dkLS(ctx, 3); ctx.fillStyle = DKC.goldInk; ctx.fillText('BAGIAN ' + Number(s.num), x+56, 460); dkLS(ctx, 0);
+      dkF(ctx, 600, 76, DK_SERIF); ctx.fillStyle = DKC.ink; ctx.fillText(s.title, x, 560);
+      dkF(ctx, 400, 26); ctx.fillStyle = DKC.muted; ctx.fillText(s.sub, x, 616);
+    }
+    dkFrame(ctx, s, page, total, true);
+    return cv;
+  }
+  if(s.kind==='recs'){
+    const {cv, ctx} = dkNew(DKC.cream);
+    if(!noText){
+      dkFrame(ctx, {eyebrow:'Langkah berikutnya', title:s.title}, page, total, false);
+      let y = DK.BT + 20;
+      const avail = DK.BB - DK.BT - (s.notes.length ? 50 : 0), step = Math.min(150, avail/Math.max(1, s.recs.length));
+      s.recs.forEach((r, i)=>{
+        ctx.beginPath(); ctx.arc(DK.X+26, y+20, 26, 0, Math.PI*2); ctx.fillStyle = DKC.navy; ctx.fill();
+        dkF(ctx, 800, 22); ctx.fillStyle = DKC.goldL; ctx.textAlign = 'center'; ctx.fillText(String(i+1), DK.X+26, y+28); ctx.textAlign = 'left';
+        dkF(ctx, 700, 28); ctx.fillStyle = DKC.ink; ctx.fillText(dkFit(ctx, r.who, DK.W-2*DK.X-90), DK.X+80, y+30);
+        dkF(ctx, 400, 23); ctx.fillStyle = '#33454E';
+        const txt = r.txt.charAt(0).toUpperCase() + r.txt.slice(1);
+        dkWrap(ctx, txt, DK.W-2*DK.X-90, step>=120 ? 2 : 1).forEach((ln, k)=> ctx.fillText(ln, DK.X+80, y+68+k*32));
+        y += step;
+      });
+      if(s.notes.length){ dkF(ctx, 400, 18); ctx.fillStyle = DKC.muted; ctx.fillText(dkFit(ctx, 'Catatan: '+s.notes.join(' '), DK.W-2*DK.X), DK.X, DK.BB-6); }
+    } else dkFrame(ctx, s, page, total, true);
+    return cv;
+  }
+  const {cv, ctx} = dkNew('#FFFFFF');
+  s.draw(ctx);
+  dkFrame(ctx, s, page, total, noText);
+  return cv;
+}
+async function buildDeck(){
+  const specs = await buildDeckSpecs();
+  const total = specs.length;
+  return specs.map((s, i)=>{
+    const cv = dkRender(s, i+1, total, false);
+    return {spec:s, url: cv.toDataURL('image/jpeg', 0.92)};
+  });
+}
+
+// ---------- tampilan presentasi ----------
+function dkShow(i){
+  deck.idx = Math.max(0, Math.min(deck.slides.length-1, i));
+  const im = document.getElementById('dkImg'), s = deck.slides[deck.idx];
+  if(im && s){ im.src = s.url; im.alt = `Slide ${deck.idx+1}: ${s.spec.title || 'Cover'}`; }
+  const c = document.getElementById('dkCount'); if(c) c.textContent = `${deck.idx+1} / ${deck.slides.length}`;
+}
+async function dkRebuild(keepIdx){
+  const el = document.getElementById('deck');
+  el.classList.add('loading'); deck.busy = true;
+  await new Promise(r=> setTimeout(r, 30));
+  try{ deck.slides = await withFilter(buildDeck); deck.tab = activeTab; }
+  catch(e){ console.error(e); showToast('Gagal menyiapkan slide'); }
+  deck.busy = false; el.classList.remove('loading');
+  dkShow(keepIdx ? deck.idx : 0);
+  document.querySelectorAll('#deck [data-pch]').forEach(b=> b.setAttribute('aria-pressed', String(b.dataset.pch===activeTab)));
+}
+async function presEnter(){
+  if(!uploaded.length){ showToast('Belum ada data untuk dipresentasikan'); return; }
+  const el = document.getElementById('deck');
+  document.documentElement.classList.add('present'); el.hidden = false;
+  const de = document.documentElement;
+  if(de.requestFullscreen && !document.fullscreenElement){ de.requestFullscreen().catch(()=>{}); }
+  await dkRebuild(false);
+  const nx = document.getElementById('dkNext'); if(nx) nx.focus();
+}
+function presExit(){
+  if(!document.documentElement.classList.contains('present')) return;
+  document.documentElement.classList.remove('present');
+  document.getElementById('deck').hidden = true;
+  if(document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(()=>{});
+  requestAnimationFrame(()=>{ lastChartW = 0; renderCharts(); });
+}
+document.querySelectorAll('[data-present]').forEach(b=> b.addEventListener('click', presEnter));
+document.getElementById('dkPrev').addEventListener('click', ()=> dkShow(deck.idx-1));
+document.getElementById('dkNext').addEventListener('click', ()=> dkShow(deck.idx+1));
+document.getElementById('dkExit').addEventListener('click', presExit);
+document.getElementById('dkImg').addEventListener('click', (e)=>{ const r = e.currentTarget.getBoundingClientRect(); dkShow(deck.idx + (e.clientX < r.left + r.width*0.3 ? -1 : 1)); });
+document.querySelectorAll('#deck [data-pch]').forEach(b=> b.addEventListener('click', async ()=>{
+  if(deck.busy || b.dataset.pch===activeTab) return;
+  const t = document.querySelector(`.tab[data-tab="${b.dataset.pch}"]`); if(t) t.click();
+  await dkRebuild(true);
+}));
+document.addEventListener('keydown', (e)=>{
+  if(!document.documentElement.classList.contains('present')) return;
+  if(e.key==='ArrowRight' || e.key==='PageDown' || e.key===' '){ e.preventDefault(); dkShow(deck.idx+1); }
+  else if(e.key==='ArrowLeft' || e.key==='PageUp'){ e.preventDefault(); dkShow(deck.idx-1); }
+  else if(e.key==='Home'){ dkShow(0); } else if(e.key==='End'){ dkShow(deck.slides.length-1); }
+  else if(e.key==='Escape'){ presExit(); }
+});
+document.addEventListener('fullscreenchange', ()=>{ if(!document.fullscreenElement) presExit(); });
+
+// ---------- download PDF / PPT ----------
+const DK_LIBS = {
+  pdf: ['https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js', 'https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js'],
+  ppt: ['https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js', 'https://cdnjs.cloudflare.com/ajax/libs/pptxgenjs/3.12.0/pptxgen.bundle.js'],
+};
+function dkLoadLib(kind){
+  const ready = ()=> kind==='pdf' ? (window.jspdf && window.jspdf.jsPDF) : window.PptxGenJS;
+  if(ready()) return Promise.resolve();
+  const tryAt = (i)=> new Promise((res, rej)=>{
+    if(i>=DK_LIBS[kind].length) return rej(new Error('Library tidak bisa dimuat. Cek koneksi internet.'));
+    const sc = document.createElement('script'); sc.src = DK_LIBS[kind][i];
+    sc.onload = ()=> ready() ? res() : tryAt(i+1).then(res, rej); sc.onerror = ()=> tryAt(i+1).then(res, rej);
+    document.head.appendChild(sc);
+  });
+  return tryAt(0);
+}
+function dkFileName(ext){ return `presentasi-${activeTab}-${new Date().toISOString().slice(0,10)}.${ext}`; }
+async function dkEnsure(){
+  if(!deck.slides.length || deck.tab!==activeTab || !document.documentElement.classList.contains('present')){
+    deck.slides = await withFilter(buildDeck); deck.tab = activeTab;
+  }
+  return deck.slides;
+}
+async function downloadDeckPDF(){
+  if(!uploaded.length){ alert('Belum ada data untuk dibuat presentasi.'); return; }
+  showToast('Menyiapkan PDF…');
+  try{
+    await dkLoadLib('pdf');
+    const slides = await dkEnsure();
+    const {jsPDF} = window.jspdf;
+    const doc = new jsPDF({orientation:'landscape', unit:'px', format:[DK.W, DK.H], hotfixes:['px_scaling'], compress:true});
+    slides.forEach((s, i)=>{ if(i) doc.addPage([DK.W, DK.H], 'landscape'); doc.addImage(s.url, 'JPEG', 0, 0, DK.W, DK.H); });
+    doc.save(dkFileName('pdf'));
+    showToast('PDF siap');
+  }catch(e){ alert('Gagal membuat PDF: ' + (e.message || e)); }
+}
+async function downloadDeckPPT(){
+  if(!uploaded.length){ alert('Belum ada data untuk dibuat presentasi.'); return; }
+  showToast('Menyiapkan PowerPoint…');
+  try{
+    await dkLoadLib('ppt');
+    await dkEnsure();
+    const specs = deck.slides.map(s=> s.spec), total = specs.length;
+    const P = new window.PptxGenJS(); P.layout = 'LAYOUT_WIDE'; P.title = 'Review Performa ' + (activeTab==='video'?'Video':'Live');
+    const IN = 13.333/DK.W, PT = 0.5;  // 1px = 0.5pt
+    const footer = (sl, page, dark)=>{
+      sl.addText(dkFooterText(), {x:DK.X*IN, y:(DK.H-58)*IN, w:(DK.W-2*DK.X-150)*IN, h:0.3, fontFace:'Arial', fontSize:8.5, color: dark ? '8FA3AC' : '93A0A6', margin:0});
+      sl.addText(`${page} / ${total}`, {x:(DK.W-DK.X-150)*IN, y:(DK.H-58)*IN, w:150*IN, h:0.3, fontFace:'Arial', fontSize:8.5, bold:true, color:'93A0A6', align:'right', margin:0});
+    };
+    const titleBox = (sl, eyebrow, title)=>{
+      sl.addText(eyebrow.toUpperCase(), {x:(DK.X+56)*IN, y:70*IN, w:(DK.W-2*DK.X-60)*IN, h:0.32, fontFace:'Arial', fontSize:9.5, bold:true, color:'8C6B14', charSpacing:3, margin:0});
+      sl.addText(title, {x:DK.X*IN, y:118*IN, w:(DK.W-2*DK.X)*IN, h:0.62, fontFace:'Georgia', fontSize:24, color:'0B1D26', fit:'shrink', margin:0});
+    };
+    specs.forEach((s, i)=>{
+      const page = i+1, sl = P.addSlide();
+      if(s.kind==='img'){
+        sl.addImage({data: dkRender(s, page, total, true).toDataURL('image/jpeg', 0.92), x:0, y:0, w:13.333, h:7.5});
+        titleBox(sl, s.eyebrow, s.title);
+      } else if(s.kind==='cover'){
+        sl.background = {color:'0B1D26'};
+        sl.addImage({data: dkRender(s, page, total, true).toDataURL('image/jpeg', 0.9), x:0, y:0, w:13.333, h:7.5});
+        if(dkLogo){ const c = document.createElement('canvas'); c.width = c.height = 168; const x = c.getContext('2d'); x.fillStyle = '#fff'; dkRR(x,0,0,168,168,40); x.fill(); x.drawImage(dkLogo, 20, 20, 128, 128);
+          sl.addImage({data:c.toDataURL('image/png'), x:120*IN, y:110*IN, w:84*IN, h:84*IN}); }
+        sl.addText('INDO GROUP', {x:232*IN, y:136*IN, w:5, h:0.3, fontFace:'Arial', fontSize:11, bold:true, color:'FBD784', charSpacing:5, margin:0});
+        sl.addText([{text:'Review Performa', options:{breakLine:true}}, {text:s.ch}], {x:120*IN, y:460*IN, w:10, h:2, fontFace:'Georgia', fontSize:52, color:'FFFFFF', margin:0, valign:'top', lineSpacingMultiple:1.05});
+        sl.addShape(P.ShapeType.rect, {x:120*IN, y:730*IN, w:72*IN, h:4*IN, fill:{color:'FBD784'}, line:{color:'FBD784'}});
+        sl.addText(dkPeriodText(), {x:120*IN, y:770*IN, w:10, h:0.4, fontFace:'Arial', fontSize:15, color:'C9D3D8', margin:0});
+        const f = dkFilterText(); if(f) sl.addText('Filter: '+f, {x:120*IN, y:822*IN, w:10, h:0.35, fontFace:'Arial', fontSize:11, color:'8FA3AC', margin:0});
+      } else if(s.kind==='divider'){
+        sl.background = {color:'F6F2E8'};
+        sl.addText(s.num, {x:160*IN, y:380*IN, w:3.2, h:2.2, fontFace:'Georgia', fontSize:150, bold:true, color:'E4DDCC', margin:0, valign:'top'});
+        sl.addText('BAGIAN ' + Number(s.num), {x:5.1, y:432*IN, w:6, h:0.3, fontFace:'Arial', fontSize:10, bold:true, color:'8C6B14', charSpacing:3, margin:0});
+        sl.addText(s.title, {x:5.1, y:480*IN, w:7.5, h:0.8, fontFace:'Georgia', fontSize:38, color:'0B1D26', margin:0});
+        sl.addText(s.sub, {x:5.1, y:590*IN, w:7.5, h:0.4, fontFace:'Arial', fontSize:13, color:'5B6B73', margin:0});
+        footer(sl, page);
+      } else if(s.kind==='recs'){
+        sl.background = {color:'F6F2E8'};
+        sl.addShape(P.ShapeType.rect, {x:DK.X*IN, y:92*IN, w:40*IN, h:3*IN, fill:{color:'E3C46A'}, line:{color:'E3C46A'}});
+        titleBox(sl, 'Langkah berikutnya', s.title);
+        const rows = s.recs.map((r, k)=> [
+          {text:`${k+1}. ${r.who}`, options:{bold:true, fontSize:14, color:'0B1D26', breakLine:true}},
+          {text:r.txt.charAt(0).toUpperCase() + r.txt.slice(1), options:{fontSize:12, color:'33454E', breakLine:true, paraSpaceAfter:10}},
+        ]).flat();
+        sl.addText(rows, {x:DK.X*IN, y:DK.BT*IN, w:(DK.W-2*DK.X)*IN, h:(DK.BB-DK.BT-50)*IN, fontFace:'Arial', valign:'top', margin:0});
+        if(s.notes.length) sl.addText('Catatan: ' + s.notes.join(' '), {x:DK.X*IN, y:(DK.BB-30)*IN, w:(DK.W-2*DK.X)*IN, h:0.3, fontFace:'Arial', fontSize:9, color:'5B6B73', margin:0});
+        footer(sl, page);
+      }
+    });
+    await P.writeFile({fileName: dkFileName('pptx')});
+    showToast('PowerPoint siap');
+  }catch(e){ console.error(e); alert('Gagal membuat PowerPoint: ' + (e.message || e)); }
+}
+DL_ACTIONS['deck-pdf'] = ()=> downloadDeckPDF();
+DL_ACTIONS['deck-ppt'] = ()=> downloadDeckPPT();
+document.querySelectorAll('#deck [data-dk]').forEach(b=> b.addEventListener('click', ()=> b.dataset.dk==='pdf' ? downloadDeckPDF() : downloadDeckPPT()));
 
 // init
 loadUserMap().then(()=> render());
