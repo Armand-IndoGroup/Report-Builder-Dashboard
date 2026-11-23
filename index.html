@@ -4625,18 +4625,29 @@ function rvDiagnose(r){
     if(tDown && !cvrDown){ key = 'jangkauan'; d = `${tName} ${rvSg(traffic)}` + (cvrUp ? `, padahal CVR naik ke ${fmtPct(r.cvrIni)}` : `, ${cvr} masih terjaga`); }
     else if(tDown && cvrDown){ key = 'keduanya'; d = `${tName} ${rvSg(traffic)} dan CVR turun ke ${fmtPct(r.cvrIni)}`; }
     else if(cvrDown || ctrDown){ key = 'konversi'; d = `${traffic===null || Math.abs(traffic)<15 ? 'Trafik stabil' : `${tName} ${rvSg(traffic)}`}, tapi ${cvrDown ? `CVR turun ke ${fmtPct(r.cvrIni)}` : `CTR turun ke ${fmtPct(r.ctrIni)}`}`; }
-    else { key = 'cek'; d = `Trafik dan konversi relatif stabil (${cvr}), cek jadwal live & stok`; }
+    else { key = 'cek'; d = `Trafik dan konversi relatif stabil (${cvr}), ${activeTab==='video' ? 'cek jumlah unggahan & stok' : 'cek jadwal live & stok'}`; }
   }
   return {key, d, g, delta:(r.gmvIni||0)-(r.gmvLalu||0)};
 }
 const RV_REC = {
-  konversi: 'trafiknya ada tapi belum jadi pesanan. Cek lagi penawaran, harga, dan materi live.',
-  jangkauan: 'konversinya sudah bagus, yang kurang jangkauannya. Tambah iklan atau frekuensi live.',
-  kualitas: 'trafik naik tapi kurang berkualitas. Rapikan voucher, judul, dan halaman produk.',
-  keduanya: 'trafik dan konversi sama-sama turun. Perlu evaluasi materi live dan penawaran.',
-  cek: 'turun tanpa pola yang jelas. Cek jadwal live, host, dan stok produk.',
-  sehat: 'tumbuh sehat dari trafik dan konversi. Pertahankan pola live yang sekarang.',
-  kecil: 'nilainya masih kecil, pantau satu periode lagi sebelum menyimpulkan.',
+  live: {
+    konversi: 'penontonnya ada, tapi belum banyak yang checkout. Coba perkuat penawaran saat live, misalnya bundling, voucher khusus live, atau demo produk yang lebih jelas.',
+    jangkauan: 'yang mampir sudah banyak yang beli, tinggal tambah yang mampir. Naikkan frekuensi atau durasi live dan dukung dengan iklan.',
+    kualitas: 'penonton naik, tapi belum banyak yang tertarik klik produk. Rapikan pin produk, voucher, dan judul live supaya lebih menggoda.',
+    keduanya: 'penonton dan pembeli sama-sama turun. Saatnya evaluasi konsep live, host, dan penawarannya.',
+    cek: 'turunnya belum kelihatan polanya. Cek jadwal live, host yang bertugas, dan stok produk.',
+    sehat: 'tumbuh sehat dari penonton dan pembeli. Pertahankan pola live yang sekarang.',
+    kecil: 'nilainya masih kecil, jadi kita pantau satu periode lagi sebelum menarik kesimpulan.',
+  },
+  video: {
+    konversi: 'videonya ditonton tapi belum jadi pesanan. Perjelas produk dan harga di 3 detik pertama, lalu pasang ajakan beli yang jelas.',
+    jangkauan: 'konversinya sudah bagus, yang kurang jangkauannya. Tambah jumlah video, boost video terlaris, atau ikut tren dan sound yang sedang ramai.',
+    kualitas: 'video banyak dilihat tapi jarang diklik. Pastikan produk muncul jelas di video dan tag produknya sesuai isi video.',
+    keduanya: 'jangkauan dan konversi sama-sama turun. Evaluasi konsep video, ganti hook, dan coba format baru.',
+    cek: 'turunnya belum kelihatan polanya. Cek jumlah unggahan, jadwal posting, dan stok produk.',
+    sehat: 'tumbuh sehat dari jangkauan dan konversi. Buat variasi dari video yang performanya paling bagus.',
+    kecil: 'nilainya masih kecil, jadi kita pantau satu periode lagi sebelum menarik kesimpulan.',
+  },
 };
 function buildReview(){
   const rows = buildChannelRows(activeTab);
@@ -4669,7 +4680,7 @@ function buildReview(){
   const recs = [...probs, ...healthy, ...small].slice(0,5).map(g=>{
     const names = g.items.map(d=> d.r.shop);
     const who = names.length>1 ? names.slice(0,-1).join(', ') + ' dan ' + names[names.length-1] : names[0];
-    return {who: `${who} ${g.p}`, txt: RV_REC[g.key], key:g.key};
+    return {who: `${who} ${g.p}`, txt: RV_REC[activeTab==='video' ? 'video' : 'live'][g.key], key:g.key};
   });
   const notes = [];
   diag.filter(d=> d.key==='kecil' && d.g!==null && Math.abs(d.g)>=300).forEach(d=> notes.push(`${d.r.shop} ${d.r.platform} ${d.g>=0?'naik':'turun'} ${rvPct(d.g)} karena basisnya sangat kecil (${rvRp(d.r.gmvLalu)} → ${rvRp(d.r.gmvIni)}).`));
@@ -4679,6 +4690,8 @@ function buildReview(){
   const nProb = diag.filter(d=> !['sehat','kecil'].includes(d.key)).length, nOk = diag.filter(d=> d.key==='sehat').length;
   // kalimat pembuka
   let lead = `GMV ${ch} ${tg===null ? '' : (tg>=0?'naik ':'turun ') + rvPct(tg) + ' '}ke ${rvRp(totIni)}`;
+  const nVid = activeTab==='video' ? rows.reduce((s,r)=> s + (r.extraIni||0), 0) : 0;
+  if(nVid) lead += ` dari ${fmtInt(nVid)} video`;
   if(driver && Math.abs(driver.delta)>0) lead += `, ${up ? 'terutama didorong' : 'terutama karena'} ${driver.p} (${driver.delta>=0?'+':'−'}${rvRp(Math.abs(driver.delta))})`;
   lead += '.';
   if(diag.length) lead += nProb ? ` ${nProb} toko perlu perhatian, ${nOk} tumbuh sehat.` : ` Semua toko yang dibandingkan dalam kondisi baik.`;
