@@ -11,6 +11,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+<script>try{if(localStorage.getItem('rb-theme-v1')==='dark')document.documentElement.classList.add('dark')}catch(e){}</script>
 <style>
 :root{
   /* palet MNTN: navy gelap + emas, dasar terang hangat */
@@ -510,6 +511,66 @@ html.role-view .db-card{margin:-72px 22px 0; position:relative; z-index:2; borde
 .db-user{font-size:12px; color:var(--muted);}
 .db-user b{color:var(--ink);}
 
+/* ===== DATABASE: slot pembanding + kalender + kelola data ===== */
+.dbq{display:flex; flex-wrap:wrap; gap:8px; margin:2px 0 16px;}
+.db-card .pfield > .seg{align-self:flex-start;}
+.dbq button{display:flex; flex-direction:column; align-items:flex-start; gap:2px; text-align:left; font-family:var(--body);
+  border:1px solid var(--border); background:#fff; border-radius:12px; padding:9px 14px; cursor:pointer; color:var(--ink);}
+.dbq button b{font-size:13px; font-weight:700;}
+.dbq button small{font-size:11px; color:var(--muted);}
+.dbq button:hover:not(:disabled){border-color:var(--navy); background:var(--gold-soft);}
+.dbq button:disabled{opacity:.45; cursor:not-allowed;}
+.dbslots{display:grid; grid-template-columns:repeat(auto-fill, minmax(min(100%, 250px), 1fr)); gap:8px;}
+.dbslot{display:flex; align-items:center; gap:10px; border:1px solid var(--border); background:#fff; border-radius:12px; padding:10px 8px 10px 12px; min-width:0;}
+.dbslot.active{border-color:var(--navy); box-shadow:0 0 0 2px rgba(227,196,106,.55);}
+.dbslot .sw2{width:12px; height:12px; border-radius:4px; flex:none;}
+.dbslot .pick{flex:1; min-width:0; text-align:left; background:none; border:none; padding:0; cursor:pointer; font-family:var(--body); color:var(--ink);}
+.dbslot .pick .n{font-size:10.5px; color:var(--muted); font-weight:700; letter-spacing:.06em; text-transform:uppercase;}
+.dbslot .pick .t{font-size:13.5px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.dbslot .x{border:none; background:none; color:var(--muted-2); cursor:pointer; font-size:13px; padding:4px 7px; border-radius:7px;}
+.dbslot .x:hover{color:var(--danger); background:var(--down-bg);}
+.dbslot.add{border-style:dashed; justify-content:center; color:var(--muted); cursor:pointer; font-family:var(--body); font-size:13px; font-weight:600; background:rgba(255,255,255,.55);}
+.dbslot.add:hover{border-color:var(--navy); color:var(--ink);}
+.cbadge{display:inline-block; font-size:10.5px; font-weight:700; padding:1px 7px; border-radius:10px; margin-left:6px; vertical-align:1px;}
+.cbadge.full{background:var(--up-bg); color:var(--success);}
+.cbadge.part{background:var(--gold-soft); color:var(--gold-ink); border:1px solid #F0DCA4;}
+.dbcal{margin-top:12px; border:1px solid var(--border); border-radius:14px; background:#fff; padding:14px;}
+.dbcal-h{display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:10px; flex-wrap:wrap;}
+.dbcal-h b{font-size:13.5px;}
+.dbcal-leg{display:flex; gap:12px; flex-wrap:wrap; font-size:11px; color:var(--muted);}
+.dbcal-leg i{display:inline-block; width:11px; height:11px; border-radius:3px; margin-right:5px; vertical-align:-1px; border:1px solid transparent;}
+.dbcal-body{max-height:330px; overflow:auto; display:flex; flex-direction:column; gap:6px; padding-right:2px;}
+.dbcal-row{display:grid; grid-template-columns:92px 1fr; gap:10px; align-items:center;}
+.dbcal-row .ml{font-size:12px; font-weight:700; color:var(--muted);}
+.dbcal-cells{display:flex; flex-wrap:wrap; gap:5px;}
+.wk{font-family:var(--body); font-size:12px; font-weight:600; min-width:64px; padding:7px 9px; border-radius:8px; cursor:pointer; border:1px solid var(--border); background:#fff; color:var(--ink);}
+.wk.full{background:var(--up-bg); color:#1E5C3F; border-color:#BFE0CC;}
+.wk.part{background:var(--gold-soft); color:#7A5A0E; border-color:#F0DCA4;}
+.wk.sel{background:var(--navy); color:var(--gold); border-color:var(--navy);}
+.wk.none{opacity:.35; cursor:default;}
+.wk:hover:not(.none):not(.sel){border-color:var(--navy);}
+.wk:focus-visible, .dbslot .pick:focus-visible, .dbq button:focus-visible{outline:2px solid var(--gold-2); outline-offset:2px;}
+.dbmg{display:flex; flex-direction:column; gap:6px; max-height:440px; overflow:auto; padding-right:2px;}
+.dbmg details{border:1px solid var(--border); border-radius:10px; background:#fff;}
+.dbmg summary{display:flex; align-items:center; gap:10px; padding:9px 10px 9px 12px; cursor:pointer; list-style:none; font-size:13px;}
+.dbmg summary::-webkit-details-marker{display:none;}
+.dbmg summary::before{content:"▸"; color:var(--muted); font-size:11px;}
+.dbmg details[open] summary::before{content:"▾";}
+.dbmg summary .t{font-weight:700; flex:1; min-width:0;}
+.dbmg summary .m{font-size:11.5px; color:var(--muted); white-space:nowrap;}
+.dbmg .delp{border:1px solid var(--border); background:#fff; color:var(--danger); border-radius:8px; font-size:11.5px; font-weight:700; padding:5px 10px; cursor:pointer; font-family:var(--body);}
+.dbmg .delp:hover{background:var(--down-bg); border-color:#E8B4B0;}
+.dbmg ul{list-style:none; margin:0; padding:0 12px 10px 30px; display:flex; flex-direction:column; gap:4px;}
+.dbmg li{display:flex; justify-content:space-between; align-items:center; gap:10px; font-size:12px; color:var(--muted); padding:4px 0; border-top:1px dashed var(--border);}
+.dbmg li b{color:var(--ink); font-weight:600;}
+.dbmg li .delf{border:none; background:none; color:var(--muted-2); cursor:pointer; font-size:12px; padding:3px 7px; border-radius:6px;}
+.dbmg li .delf:hover{color:var(--danger); background:var(--down-bg);}
+.btn[aria-pressed="true"]{background:var(--navy); color:var(--gold); border-color:var(--navy);}
+@media (max-width:520px){
+  .dbcal-row{grid-template-columns:1fr; gap:4px;}
+  .wk{min-width:0; flex:1 1 calc(33% - 5px);}
+  .dbq button{flex:1 1 100%;}
+}
 /* ===== DATABASE (data tersimpan) ===== */
 .db-card{margin-top:16px;}
 .db-top{display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap; margin-bottom:14px;}
@@ -657,6 +718,233 @@ td.tg{font-weight:700;}
 }
 @media (prefers-reduced-motion:reduce){ .nav a, .sw::after{transition:none;} }
 
+/* ================================================================
+   V8 — DESAIN BARU: dasar Batik Premium (B) + bento & ringkasan (C)
+   + tabel rapi ala Executive (A) + mode gelap + mode presentasi
+   ================================================================ */
+:root{
+  --card-solid:#FFFFFF; --row-zebra:#FAF8F3; --row-hover:#FBF4E0; --th-bg:#F6F2E8; --th-ink:#0B1D26;
+  --series-1:#0B1D26; --series-2:#E3C46A; --hero-bg:#0B1D26;
+  --sticky-shadow:6px 0 10px -8px rgba(11,29,38,.25);
+}
+/* ---------- bar filter menempel ---------- */
+.fbar{position:sticky; top:12px; z-index:15; display:flex; align-items:center; gap:10px 16px; flex-wrap:wrap;
+  margin:22px 0 0; padding:10px 12px 10px 14px; border-radius:16px;
+  background:var(--glass-strong); border:1px solid var(--glass-line);
+  backdrop-filter:var(--blur); -webkit-backdrop-filter:var(--blur); box-shadow:var(--shadow-glass);}
+.fbar .tabs{box-shadow:none; background:var(--surface); border-color:transparent;}
+.fb-grp{display:flex; align-items:center; gap:8px;}
+.fb-l{font-size:10.5px; letter-spacing:.12em; text-transform:uppercase; font-weight:700; color:var(--muted);}
+.fbar .seg{background:var(--surface);}
+.fbar select{font-family:var(--body); font-size:13px; font-weight:600; color:var(--ink); background:var(--card-solid);
+  border:1px solid var(--border); border-radius:9px; padding:7px 28px 7px 10px; max-width:180px; cursor:pointer;}
+.fbar select:focus-visible{outline:2px solid var(--gold-2); outline-offset:2px;}
+.fb-per{font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; flex:1 1 140px;}
+.fb-per b{color:var(--ink);}
+.fb-act{display:flex; align-items:center; gap:8px; margin-left:auto;}
+.fb-reset{display:inline-flex; align-items:center; gap:6px; font-family:var(--body); font-size:11.5px; font-weight:700; color:var(--gold-ink);
+  background:var(--gold-soft); border:1px solid #F0DCA4; border-radius:20px; padding:4px 10px; cursor:pointer;}
+.fb-reset[hidden]{display:none;}
+.icon-btn{width:36px; height:36px; display:inline-flex; align-items:center; justify-content:center; border-radius:10px; cursor:pointer;
+  border:1px solid var(--border); background:var(--card-solid); color:var(--ink); font-size:16px; padding:0;}
+.icon-btn:hover{border-color:var(--navy);}
+.icon-btn:focus-visible{outline:2px solid var(--gold-2); outline-offset:2px;}
+.icon-btn svg{width:18px; height:18px;}
+.btn .bi{width:15px; height:15px; vertical-align:-3px; margin-right:6px;}
+
+/* ---------- ringkasan otomatis ---------- */
+.insight{padding:16px 20px; margin-bottom:16px; border-left:0;}
+.ins-h{display:flex; align-items:center; gap:10px; font-size:11px; letter-spacing:.16em; text-transform:uppercase; font-weight:700; color:var(--gold-ink); margin-bottom:10px;}
+.ins-h .dot{width:26px; height:26px; border-radius:8px; background:var(--hero-bg); color:var(--gold); display:flex; align-items:center; justify-content:center;}
+.ins-h .dot svg{width:15px; height:15px;}
+.insight ul{list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:8px 22px;}
+.insight li{position:relative; padding-left:20px; font-size:13.5px; line-height:1.5; color:var(--ink);}
+.insight li::before{content:""; position:absolute; left:2px; top:7px; width:8px; height:8px; border-radius:50%; background:var(--muted-2);}
+.insight li.ins-up::before{background:var(--success);}
+.insight li.ins-down::before{background:var(--danger);}
+.insight li b{font-weight:700;}
+
+/* ---------- KPI bento ---------- */
+.bento{display:grid; grid-template-columns:minmax(0,1.25fr) repeat(2, minmax(0,1fr)); grid-auto-rows:minmax(132px, auto); gap:16px;}
+.bento .hero{grid-row:span 2; background:var(--hero-bg); color:#fff; border-radius:18px; padding:22px 22px 18px; position:relative; overflow:hidden;
+  display:flex; flex-direction:column; box-shadow:0 18px 40px rgba(11,29,38,.22); border:1px solid rgba(251,215,132,.18);}
+.bento .hero::before{content:""; position:absolute; inset:0; background:var(--batik) center/cover; opacity:.10; pointer-events:none;}
+.bento .hero > *{position:relative;}
+.bento .hero .lb{color:rgba(255,255,255,.7);}
+.bento .hero .ico{background:rgba(251,215,132,.14); color:var(--gold);}
+.bento .hero .v{font-family:var(--serif); font-weight:600; font-size:46px; color:var(--gold); margin:16px 0 10px; padding-right:0; letter-spacing:0;}
+.bento .hero .s{color:rgba(255,255,255,.72);}
+.bento .hero .gb.na{background:rgba(255,255,255,.1); color:rgba(255,255,255,.7);}
+.bento .hero .gb.up{background:rgba(108,203,152,.18); color:#8BE0B3;}
+.bento .hero .gb.down{background:rgba(240,138,132,.18); color:#FFB0A9;}
+.hbars{margin-top:auto; padding-top:18px; display:flex; align-items:flex-end; gap:10px; height:124px;}
+.hbars .hb{flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; gap:6px; height:100%; min-width:0;}
+.hbars .hb i{display:block; width:100%; max-width:64px; border-radius:7px 7px 3px 3px; background:rgba(255,255,255,.16);}
+.hbars .hb.cur i{background:linear-gradient(180deg, var(--gold), var(--gold-2));}
+.hbars .hb span{font-size:11px; color:rgba(255,255,255,.6); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%;}
+.hbars .hb em{font-style:normal; font-size:11px; font-weight:700; color:rgba(255,255,255,.85); white-space:nowrap;}
+.hbars .hb.cur em{color:var(--gold);}
+.bento .k{border-radius:18px;}
+.ud{display:flex; gap:10px; margin:14px 0 8px;}
+.ud > div{flex:1; border-radius:12px; padding:10px 12px; min-width:0;}
+.ud .u{background:var(--up-bg);} .ud .d{background:var(--down-bg);}
+.ud b{display:block; font-size:22px; font-weight:800; font-variant-numeric:tabular-nums; line-height:1.1;}
+.ud .u b{color:var(--success);} .ud .d b{color:var(--danger);}
+.ud small{font-size:11px; color:var(--muted); font-weight:600;}
+.ud-names{font-size:11.5px; color:var(--muted); line-height:1.45;}
+.ud-names b{color:var(--ink); font-weight:600;}
+.kpi-row.two{grid-template-columns:minmax(0,1fr) minmax(0,1.6fr);}
+
+/* ---------- tabel rapi (A) ---------- */
+thead th, thead tr.groups th{background:var(--th-bg); color:var(--th-ink); border-bottom:1px solid var(--border);}
+thead tr:last-child th{border-bottom:2px solid var(--gold-2);}
+thead th.gcol{color:var(--muted);}
+thead th.tg{color:var(--gold-ink);}
+thead th:not(:first-child), tbody td:not(:first-child){text-align:right;}
+tbody td.shop{display:table-cell;}
+tbody td.shop .platform-label{margin-right:8px; vertical-align:1px;}
+tbody tr td{background:var(--card-solid);}
+tbody tr:nth-child(even) td{background:var(--row-zebra);}
+tbody tr:hover td{background:var(--row-hover);}
+thead th:first-child, tbody td:first-child{position:sticky; left:0; z-index:1;}
+thead th:first-child{z-index:2;}
+.table-scroll.scrolled thead th:first-child, .table-scroll.scrolled tbody td:first-child{box-shadow:var(--sticky-shadow);}
+tr.total td{background:var(--gold-soft) !important;}
+tr.total td:first-child{background:#F7EED3 !important;}
+.table-scroll{border-radius:12px; border:1px solid var(--border);}
+
+/* ---------- section / slide ---------- */
+.slide{display:block;}
+.pres-bar, .pres-brand{display:none;}
+
+/* ---------- MODE PRESENTASI ---------- */
+html.present body{padding:0; overflow:hidden;}
+html.present .side, html.present .mnav, html.present header.top, html.present .card.lifted, html.present .db-card,
+html.present .fbar, html.present .dl-menu, html.present .toast{display:none !important;}
+html.present .wrap{margin:0; max-width:none; padding:0;}
+html.present .slide{display:none;}
+html.present .slide.cur{display:block; height:100vh; overflow:auto; padding:78px clamp(20px, 4vw, 64px) 96px;}
+html.present .sec-head{margin-top:0;}
+html.present .sec-num{font-size:96px;}
+html.present .sec-title{font-size:36px;}
+html.present .insight li{font-size:15.5px;}
+html.present .pres-brand{display:flex; position:fixed; top:16px; left:clamp(20px, 4vw, 64px); right:clamp(20px, 4vw, 64px); z-index:40; align-items:center; gap:12px;}
+.pres-brand img{width:38px; height:38px; border-radius:10px; background:#fff; padding:5px; object-fit:contain;}
+.pres-brand b{display:block; font-family:var(--serif); font-size:16px; font-weight:600; color:var(--ink); line-height:1.2;}
+.pres-brand small{font-size:11.5px; color:var(--muted);}
+html.present .pres-bar{display:flex; position:fixed; left:50%; bottom:18px; transform:translateX(-50%); z-index:40; align-items:center; gap:6px;
+  padding:6px; border-radius:16px; background:rgba(11,29,38,.92); border:1px solid rgba(255,255,255,.12); box-shadow:0 12px 34px rgba(11,29,38,.35); color:#fff;}
+.pres-bar button{font-family:var(--body); font-size:13px; font-weight:700; color:rgba(255,255,255,.85); background:none; border:none; border-radius:10px; padding:8px 12px; cursor:pointer;}
+.pres-bar button:hover{background:rgba(255,255,255,.08); color:#fff;}
+.pres-bar button:focus-visible{outline:2px solid var(--gold); outline-offset:1px;}
+.pres-bar .nb{font-size:18px; padding:4px 12px; line-height:1;}
+.pres-bar #presCount{font-size:12.5px; font-weight:700; color:var(--gold); min-width:44px; text-align:center; font-variant-numeric:tabular-nums;}
+.pres-bar .sep{width:1px; height:22px; background:rgba(255,255,255,.15); margin:0 4px;}
+.pres-bar .pch{display:flex; background:rgba(255,255,255,.07); border-radius:10px; padding:2px;}
+.pres-bar .pch button{padding:6px 12px;}
+.pres-bar .pch button[aria-pressed="true"]{background:var(--gold); color:var(--navy);}
+.pres-bar .ex{color:#FFB4A8;}
+.pres-dots{display:flex; gap:5px; margin:0 4px;}
+
+/* ---------- responsif ---------- */
+@media (max-width:1180px){
+  .bento{grid-template-columns:repeat(2, minmax(0,1fr));}
+  .bento .hero{grid-column:1 / -1; grid-row:auto;}
+  .hbars{height:110px;}
+  .kpi-row.two{grid-template-columns:1fr;}
+}
+@media (max-width:860px){
+  .fbar{position:relative; top:auto; margin-top:16px; padding:8px; gap:8px;}
+  .fbar .tabs .tab{padding:7px 11px;} .fbar .seg button{padding:7px 10px;}
+  .fbar select{max-width:none;} .fb-grp:has(#fShop){flex:1 1 120px;} .fb-grp:has(#fShop) select{width:100%;}
+  .fb-act .btn.primary{padding:8px 11px;}
+  .fbar::-webkit-scrollbar{display:none;}
+  .fb-per{display:none;}
+  .fb-l{display:none;}
+  .insight ul{grid-template-columns:1fr;}
+  html.present .slide.cur{padding:70px 14px 92px;}
+  html.present .sec-num{font-size:60px;}
+  html.present .sec-title{font-size:24px;}
+}
+@media (max-width:520px){
+  .bento{gap:10px; grid-auto-rows:auto;}
+  .bento .hero .v{font-size:34px;}
+  .pres-bar .pch{display:none;}
+}
+
+/* ================================================================
+   MODE GELAP
+   ================================================================ */
+html.dark{
+  color-scheme:dark;
+  --page:#08141A; --ink:#E8EEF0; --muted:#9AACB4; --muted-2:#6C828C;
+  --border:rgba(255,255,255,.10); --zebra:rgba(255,255,255,.03); --surface:rgba(255,255,255,.07);
+  --gold-soft:rgba(251,215,132,.11); --gold-ink:#E9C978; --primary-soft:rgba(255,255,255,.06);
+  --success:#6CCB98; --danger:#F08A84; --up-bg:rgba(108,203,152,.15); --down-bg:rgba(240,138,132,.15);
+  --glass:rgba(17,36,45,.58); --glass-strong:rgba(15,32,41,.82); --glass-line:rgba(255,255,255,.08);
+  --shadow-glass:0 10px 30px rgba(0,0,0,.35), 0 1px 2px rgba(0,0,0,.3);
+  --card-solid:#10232C; --row-zebra:#132831; --row-hover:#1D2F2C; --th-bg:#0D1E26; --th-ink:#E9C978;
+  --series-1:#8FB0BF; --hero-bg:#0E2631;
+  --sticky-shadow:6px 0 10px -8px rgba(0,0,0,.6);
+}
+html.dark .bg::before{opacity:.10;}
+html.dark .bg i:nth-child(1){background:rgba(251,215,132,.14);}
+html.dark .bg i:nth-child(2){background:rgba(70,120,140,.18);}
+html.dark .bg i:nth-child(3){background:rgba(227,196,106,.10);}
+html.dark .card, html.dark .glass{box-shadow:var(--shadow-glass), inset 0 1px 0 rgba(255,255,255,.05);}
+html.dark .card.lifted, html.dark.role-view .db-card{background:#0F222B; box-shadow:0 18px 40px rgba(0,0,0,.45);}
+html.dark .btn, html.dark .dl-pop, html.dark .pfield input, html.dark .chip select, html.dark .dbq button, html.dark .dbslot,
+html.dark .dbcal, html.dark .wk, html.dark .dbmg details, html.dark .dbmg .delp, html.dark .gate-input input{background:var(--card-solid); color:var(--ink);}
+html.dark .btn:hover, html.dark .icon-btn:hover{border-color:var(--gold-2); color:var(--gold);}
+html.dark .btn.primary, html.dark .btn[aria-pressed="true"]{background:var(--gold); color:var(--navy); border-color:var(--gold);}
+html.dark .btn.primary:hover{background:var(--gold-2); color:var(--navy);}
+html.dark .seg button[aria-pressed="true"], html.dark .tab.active, html.dark .mchips button[aria-pressed="true"]{background:var(--gold); color:var(--navy);}
+html.dark .tab.active .count{background:var(--navy); color:var(--gold);}
+html.dark .tab:hover{background:rgba(255,255,255,.06);}
+html.dark .mchips button{background:var(--card-solid);}
+html.dark .dl-item:hover, html.dark .dl-item:focus-visible{color:var(--gold);}
+html.dark .drop{background:rgba(255,255,255,.03); border-color:rgba(255,255,255,.18);}
+html.dark .chip{background:rgba(255,255,255,.04);}
+html.dark .chip.warn{background:rgba(231,179,90,.10);}
+html.dark .chip select.set:hover{background:var(--card-solid);}
+html.dark .sec-num{color:rgba(255,255,255,.06);}
+html.dark tr.total td{color:var(--gold); border-top-color:var(--gold-2);}
+html.dark tr.total td:first-child{background:#1E2A26 !important;}
+html.dark .pcard{background:rgba(16,35,44,.75); border-color:rgba(255,255,255,.07);}
+html.dark .pbar{background:rgba(255,255,255,.08);}
+html.dark .pbar i, html.dark .prow:nth-child(-n+3) .pbar i{background:linear-gradient(90deg, #6F93A3, #9DBCCA);}
+html.dark .prank{color:var(--ink);}
+html.dark .prow:nth-child(-n+3) .prank{background:var(--gold); color:var(--navy);}
+html.dark .pnew{color:var(--gold); border-color:rgba(251,215,132,.3);}
+html.dark .kbar{background:rgba(255,255,255,.08);}
+html.dark .kbar i{background:linear-gradient(90deg, #6F93A3, #9DBCCA);}
+html.dark .k .ico{background:rgba(251,215,132,.12);}
+html.dark .gb.na, html.dark .k .trend.na{background:rgba(255,255,255,.07);}
+html.dark .kleg > div{border-bottom-color:rgba(255,255,255,.1);}
+html.dark .ins-h .dot{background:rgba(251,215,132,.14);}
+html.dark .wk.full{color:#9BE3BC; border-color:rgba(108,203,152,.35);}
+html.dark .wk.part{color:var(--gold); border-color:rgba(251,215,132,.3);}
+html.dark .wk.sel{background:var(--gold); color:var(--navy); border-color:var(--gold);}
+html.dark .dbslot.active{border-color:var(--gold-2);}
+html.dark .dbslot.add{background:rgba(255,255,255,.03);}
+html.dark .dbslot .sw2{box-shadow:0 0 0 1px rgba(255,255,255,.35);}
+html.dark .cbadge.part, html.dark .fb-reset, html.dark .db-role{border-color:rgba(251,215,132,.3);}
+html.dark .db-role.view{background:rgba(255,255,255,.06);}
+html.dark .platform-label.tiktok, html.dark .platform-badge.tiktok{background:#2B3A41; box-shadow:inset 0 0 0 1px rgba(255,255,255,.18);}
+html.dark .pres-brand img{box-shadow:0 0 0 1px rgba(255,255,255,.1);}
+html.dark .lite .card, html.dark .lite .glass, html.dark .lite .tabs, html.dark.lite .card, html.dark.lite .glass, html.dark.lite .fbar{background:#0F222B;}
+html.lite .fbar{backdrop-filter:none; -webkit-backdrop-filter:none; background:rgba(255,255,255,.96);}
+html.dark.lite .fbar{background:#0F222B;}
+.donut-c{fill:var(--ink);} .donut-s{fill:var(--muted);}
+.ser-1{stroke:var(--series-1);} .ser-2{stroke:var(--series-2);}
+@media (prefers-reduced-motion:reduce){ .slide{scroll-behavior:auto;} }
+.side-pres{width:100%; background:var(--gold); color:var(--navy); border-color:var(--gold);}
+.side-pres:hover{background:var(--gold-2); color:var(--navy); border-color:var(--gold-2);}
+html.dark .side-pres{background:var(--gold); color:var(--navy);}
+.bento .hero .v{white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+html.dark{--tiktok:#C9D3D8;}
+html.dark .kbar i.g{background:linear-gradient(90deg, var(--gold-2), var(--gold));}
+
 </style>
 </head>
 <body>
@@ -677,6 +965,10 @@ td.tg{font-weight:700;}
   <symbol id="i-arr-up" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" d="M7 17L17 7M9 7h8v8"/></symbol>
   <symbol id="i-arr-down" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" d="M7 7l10 10M17 9v8H9"/></symbol>
   <symbol id="i-db" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M4 6c0-1.7 3.6-3 8-3s8 1.3 8 3-3.6 3-8 3-8-1.3-8-3zM4 6v6c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M3 5h18v12H3zM8 21h8M12 17v4M10 8.5v5l4-2.5z"/></symbol>
+  <symbol id="i-spark" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8zM19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z"/></symbol>
   <symbol id="i-dash" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" d="M6 12h12"/></symbol>
 </svg>
 
@@ -695,6 +987,8 @@ td.tg{font-weight:700;}
   </div>
   <div class="side-foot">
     <div class="side-mode" id="sideMode"><b>Mingguan</b>Ini vs Lalu</div>
+    <button type="button" class="btn side-pres" data-present><svg class="bi" aria-hidden="true"><use href="#i-play"/></svg>Mode presentasi</button>
+    <div class="toggle">Mode gelap <button class="sw" id="darkSw" aria-pressed="false" aria-label="Mode gelap"></button></div>
     <div class="toggle">Efek kaca <button class="sw" id="glassSw" aria-pressed="true" aria-label="Efek kaca"></button></div>
   </div>
 </aside>
@@ -759,6 +1053,30 @@ td.tg{font-weight:700;}
 
   <div class="card db-card" id="database"></div>
 
+  <div class="fbar" id="fbar" role="region" aria-label="Filter laporan">
+    <div class="fb-grp">
+      <div class="tabs" id="tabs" role="tablist" aria-label="Channel">
+      <button type="button" class="tab active" data-tab="live" role="tab" aria-selected="true">Live <span class="count" id="cnt-live">0</span></button>
+      <button type="button" class="tab" data-tab="video" role="tab" aria-selected="false">Video <span class="count" id="cnt-video">0</span></button>
+    </div>
+    </div>
+    <div class="fb-grp"><span class="fb-l">Platform</span>
+      <div class="seg" id="fPlat" role="group" aria-label="Platform">
+        <button type="button" data-fplat="all" aria-pressed="true">Semua</button>
+        <button type="button" data-fplat="Shopee" aria-pressed="false">Shopee</button>
+        <button type="button" data-fplat="TikTok" aria-pressed="false">TikTok</button>
+      </div>
+    </div>
+    <div class="fb-grp"><label class="fb-l" for="fShop">Toko</label><select id="fShop"><option value="all">Semua toko</option></select></div>
+    <button type="button" class="fb-reset" id="fbReset" hidden>Hapus filter ✕</button>
+    <div class="fb-per" id="fbPer"></div>
+    <div class="fb-act">
+      <button type="button" class="icon-btn" id="themeBtn" aria-label="Ganti ke mode gelap"></button>
+      <button type="button" class="btn primary" data-present><svg class="bi" aria-hidden="true"><use href="#i-play"/></svg>Presentasi</button>
+    </div>
+  </div>
+
+<section class="slide">
   <div class="sec-head" id="ringkasan">
     <div class="sec-left">
       <div class="sec-num" aria-hidden="true">01</div>
@@ -768,10 +1086,6 @@ td.tg{font-weight:700;}
       </div>
     </div>
     <div class="sec-actions">
-    <div class="tabs" id="tabs" role="tablist" aria-label="Channel">
-      <button type="button" class="tab active" data-tab="live" role="tab" aria-selected="true">Live <span class="count" id="cnt-live">0</span></button>
-      <button type="button" class="tab" data-tab="video" role="tab" aria-selected="false">Video <span class="count" id="cnt-video">0</span></button>
-    </div>
     <div class="dl-menu">
       <button class="btn primary dl-toggle" aria-haspopup="true" aria-expanded="false">⬇ Download</button>
       <div class="dl-pop" role="menu">
@@ -782,7 +1096,9 @@ td.tg{font-weight:700;}
   </div>
 
   <div id="kpiWrap"></div>
+  </section>
 
+<section class="slide">
   <div class="sec-head" id="tabel">
     <div class="sec-left">
       <div class="sec-num" aria-hidden="true">02</div>
@@ -815,7 +1131,9 @@ td.tg{font-weight:700;}
       <span><b>Penonton &amp; durasi tonton</b> hanya tersedia dari data Shopee — TikTok tidak menyediakan metrik ini di export product list</span>
     </div>
   </div>
+  </section>
 
+<section class="slide">
   <div class="sec-head" id="top10">
     <div class="sec-left">
       <div class="sec-num" aria-hidden="true">03</div>
@@ -839,7 +1157,9 @@ td.tg{font-weight:700;}
     <div class="note" style="margin:0 0 14px;">Hanya produk dengan GMV &gt; 0 · <span class="lbl-vs">Ini vs Lalu</span> dicocokkan lewat ID Produk</div>
     <div id="productsWrap"></div>
   </div>
+  </section>
 
+<section class="slide">
   <div class="sec-head" id="grafik">
     <div class="sec-left">
       <div class="sec-num" aria-hidden="true">04</div>
@@ -866,6 +1186,17 @@ td.tg{font-weight:700;}
     </div>
     <div id="chartsWrap"></div>
   </div>
+  </section>
+</div>
+<div class="pres-brand" id="presBrand" aria-hidden="true"><img src="logo.png" alt=""><div><b>Report Builder · Indo Group</b><small id="presPer"></small></div></div>
+<div class="pres-bar" id="presBar" role="toolbar" aria-label="Kontrol presentasi">
+  <button type="button" class="nb" id="presPrev" aria-label="Bagian sebelumnya">‹</button>
+  <span id="presCount" aria-live="polite">1 / 4</span>
+  <button type="button" class="nb" id="presNext" aria-label="Bagian berikutnya">›</button>
+  <span class="sep"></span>
+  <div class="pch" role="group" aria-label="Channel"><button type="button" data-pch="live" aria-pressed="true">Live</button><button type="button" data-pch="video" aria-pressed="false">Video</button></div>
+  <span class="sep"></span>
+  <button type="button" class="ex" id="presExit">Keluar (Esc)</button>
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
@@ -2029,8 +2360,8 @@ function buildMultiBarChartSVG(rows, series, fmt){
     });
   });
   bars += `<line x1="${padLeft}" y1="${plotTop-4}" x2="${padLeft}" y2="${plotBottom}" stroke="${C.border}" stroke-width="1.4"/>`;
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="100%" height="${height}" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" style="display:block; max-width:${width}px; background:#fff;">
-    <rect x="0" y="0" width="${width}" height="${height}" fill="#fff"/>
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="100%" height="${height}" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" style="display:block; max-width:${width}px; background:${C.bg||'#fff'}; border-radius:10px;">
+    <rect x="0" y="0" width="${width}" height="${height}" fill="${C.bg||'#fff'}"/>
     ${zebra}${grid}${legend}${bars}
   </svg>`;
 }
@@ -2094,8 +2425,8 @@ function buildVerticalBarChartSVG(rows, fmt){
 
   bars += `<line x1="${padLeft}" y1="${plotTop-4}" x2="${padLeft}" y2="${plotBottom}" stroke="${C.border}" stroke-width="1.4"/>`;
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="100%" height="${height}" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" style="display:block; max-width:${width}px; background:#fff;">
-    <rect x="0" y="0" width="${width}" height="${height}" fill="#fff"/>
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="100%" height="${height}" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" style="display:block; max-width:${width}px; background:${C.bg||'#fff'}; border-radius:10px;">
+    <rect x="0" y="0" width="${width}" height="${height}" fill="${C.bg||'#fff'}"/>
     ${zebra}${grid}${legend}${bars}
   </svg>`;
 }
@@ -2857,7 +3188,7 @@ function renderKPI(){
   const chLabel = activeTab==='video' ? 'Video' : 'Live';
   const rows = buildChannelRows(activeTab);
   if(!rows.length){
-    const hint = db.role==='view' ? `Pilih periode di kartu Data tersimpan lalu klik “Tampilkan di dashboard” untuk melihat KPI ${chLabel}.`
+    const hint = filtActive() ? `Tidak ada data ${chLabel} untuk filter yang dipilih.` : db.role==='view' ? `Pilih periode di kartu Data tersimpan lalu klik “Tampilkan di dashboard” untuk melihat KPI ${chLabel}.`
       : db.role==='edit' ? `Upload file atau pilih periode di Data tersimpan untuk melihat ringkasan KPI ${chLabel}.`
       : `Upload file untuk melihat ringkasan KPI ${chLabel}.`;
     wrap.innerHTML = `<div class="card glass"><div class="empty-state"><div class="empty-icon">📈</div>${hint}</div></div>`;
@@ -2917,15 +3248,15 @@ function renderKPI(){
   const shareS = gmvIni ? pi.S/gmvIni*100 : 0, shareT = gmvIni ? pi.T/gmvIni*100 : 0;
   const R = 50, C = 2*Math.PI*R, lenS = C*shareS/100, lenT = C*shareT/100;
   const donut = `<svg width="132" height="132" viewBox="0 0 132 132" role="img" aria-label="Shopee ${fmt1(shareS)}%, TikTok ${fmt1(shareT)}%">
-      <circle cx="66" cy="66" r="${R}" fill="none" stroke="rgba(11,29,38,.07)" stroke-width="16"/>
-      ${lenS>0 ? `<circle cx="66" cy="66" r="${R}" fill="none" stroke="#0B1D26" stroke-width="16" stroke-dasharray="${lenS.toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 66 66)"/>` : ''}
+      <circle cx="66" cy="66" r="${R}" fill="none" stroke="rgba(127,140,150,.16)" stroke-width="16"/>
+      ${lenS>0 ? `<circle class="ser-1" cx="66" cy="66" r="${R}" fill="none" stroke="#0B1D26" stroke-width="16" stroke-dasharray="${lenS.toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 66 66)"/>` : ''}
       ${lenT>0 ? `<circle cx="66" cy="66" r="${R}" fill="none" stroke="#E3C46A" stroke-width="16" stroke-dasharray="${lenT.toFixed(1)} ${C.toFixed(1)}" stroke-dashoffset="${(-lenS).toFixed(1)}" transform="rotate(-90 66 66)"/>` : ''}
-      <text x="66" y="66" text-anchor="middle" font-size="18" font-weight="800" fill="#0B1D26" font-family="-apple-system,Segoe UI,Roboto,sans-serif">${formatCompactRp(gmvIni)}</text>
-      <text x="66" y="83" text-anchor="middle" font-size="10" fill="#5B6B73" font-family="-apple-system,Segoe UI,Roboto,sans-serif">total GMV</text></svg>`;
+      <text x="66" y="66" text-anchor="middle" font-size="18" font-weight="800" class="donut-c" fill="#0B1D26" font-family="-apple-system,Segoe UI,Roboto,sans-serif">${formatCompactRp(gmvIni)}</text>
+      <text x="66" y="83" text-anchor="middle" font-size="10" class="donut-s" fill="#5B6B73" font-family="-apple-system,Segoe UI,Roboto,sans-serif">total GMV</text></svg>`;
   const laluShare = (anyLalu && gmvLalu) ? `${prevTxt}: Shopee ${fmt1(pl.S/gmvLalu*100)}% · TikTok ${fmt1(pl.T/gmvLalu*100)}%` : 'Belum ada pembanding';
   const donutCard = `<div class="kc glass thin"><h3>Porsi GMV per platform</h3><p class="ksub">${chLabel} · ${escapeHtml(l.cur)}</p>
     <div class="donut-wrap">${donut}<div class="kleg">
-      <div><span><i style="background:#0B1D26"></i>Shopee</span><b>${fmt1(shareS)}%</b></div>
+      <div><span><i style="background:var(--series-1)"></i>Shopee</span><b>${fmt1(shareS)}%</b></div>
       <div><span><i style="background:#E3C46A"></i>TikTok</span><b>${fmt1(shareT)}%</b></div>
       <div>${laluShare}</div></div></div></div>`;
 
@@ -2948,9 +3279,86 @@ function renderKPI(){
     </div>` : `<div class="kempty">Upload file periode pembanding untuk melihat toko yang naik atau turun.</div>`}
     ${missing && compared.length ? `<div class="kempty" style="padding:10px 0 0">${missing} toko belum punya data pembanding.</div>` : ''}</div>`;
 
-  wrap.innerHTML = kpiHtml + `<div class="kpi-row">${donutCard}${shareCard}${updown}</div>`;
+  // tren GMV per periode -> batang kecil di kartu utama
+  const Pk = getPeriods(activeTab);
+  let trend;
+  if(Pk.multi){
+    const mr = buildMultiRows(activeTab).rows, labs = periodLabels(activeTab);
+    trend = Pk.starts.map((st,i)=> ({lab:labs[i], v: mr.reduce((s,r)=> s + ((r.vals[i] && r.vals[i].gmv) || 0), 0)}));
+  } else trend = anyLalu ? [{lab:l.prev, v:gmvLalu}, {lab:l.cur, v:gmvIni}] : [{lab:l.cur, v:gmvIni}];
   kpiCache = {chLabel, cur:l.cur, prev:l.prev, gmvIni, gmvLalu, gG, anyLalu, best, gBest, pcsIni, pcsLalu, gP,
-    ctrIni, ctrLalu, ctrDiff, ctrFlat, shareS, shareT, pl, sorted, ups, downs, compared, missing};
+    ctrIni, ctrLalu, ctrDiff, ctrFlat, shareS, shareT, pl, sorted, ups, downs, compared, missing, trend, monthly:l.monthly};
+  const tmax = Math.max(1, ...trend.map(t=> t.v));
+  const hbars = `<div class="hbars" aria-hidden="true">${trend.map((t,i)=> `<div class="hb${i===trend.length-1?' cur':''}"><em>${formatCompactRp(t.v)}</em><i style="height:${Math.max(3, t.v/tmax*68).toFixed(1)}%"></i><span>${escapeHtml(t.lab)}</span></div>`).join('')}</div>`;
+  const c0 = cards[0];
+  const hero = `<div class="k hero"><div class="lb"><span class="ico"><svg aria-hidden="true"><use href="#${c0.ic}"/></svg></span>${c0.lb}</div>
+    <div class="v">${c0.v}</div><div class="s">${c0.s}</div>${hbars}</div>`;
+  const smalls = cards.slice(1).map(c=> `
+    <div class="k glass thin">
+      <div class="lb"><span class="ico"><svg aria-hidden="true"><use href="#${c.ic}"/></svg></span>${c.lb}</div>
+      <div class="v${c.name?' name':''}" title="${c.name ? c.v : ''}">${c.v}</div>
+      <div class="s">${c.s}</div>
+      ${kpiTrend(c.g)}
+    </div>`).join('');
+  const udCard = `<div class="k glass thin"><div class="lb"><span class="ico"><svg aria-hidden="true"><use href="#i-sum"/></svg></span>Toko naik vs turun</div>
+    ${compared.length ? `<div class="ud"><div class="u"><b>${ups.length}</b><small>toko naik</small></div><div class="d"><b>${downs.length}</b><small>toko turun</small></div></div>
+    <div class="ud-names">${downs.length ? `<b>Turun:</b> ${names(downs)}` : `<b>Naik:</b> ${names(ups)}`}</div>`
+    : `<div class="ud-names" style="margin-top:14px">Belum ada periode pembanding.</div>`}</div>`;
+  const ins = buildInsights(kpiCache);
+  const insHtml = `<div class="insight glass thin" role="note" aria-label="Ringkasan otomatis"><div class="ins-h"><span class="dot"><svg aria-hidden="true"><use href="#i-spark"/></svg></span>Ringkasan otomatis</div>
+    <ul>${ins.map(x=> `<li class="ins-${x.t}">${x.h}</li>`).join('')}</ul></div>`;
+  wrap.innerHTML = insHtml + `<div class="bento">${hero}${smalls}${udCard}</div><div class="kpi-row two">${donutCard}${shareCard}</div>`;
+}
+
+// ============================================================
+// RINGKASAN OTOMATIS — 3-5 kalimat dari angka KPI (ikut tab & filter)
+// ============================================================
+function perWord(lab, monthly){
+  const t = String(lab||'').trim();
+  if(/^ini$/i.test(t)) return monthly ? 'bulan ini' : 'minggu ini';
+  if(/^lalu$/i.test(t)) return monthly ? 'bulan lalu' : 'minggu lalu';
+  if(/^bulan (ini|lalu)$/i.test(t)) return t.toLowerCase();
+  return escapeHtml(t);
+}
+function buildInsights(c){
+  const out = [];
+  const cur = perWord(c.cur, c.monthly), prev = perWord(c.prev, c.monthly);
+  const rp = (v)=> 'Rp' + formatCompactRp(v);
+  const f1 = (n)=> Math.abs(n).toFixed(1).replace('.',',');
+  if(c.anyLalu && c.gG!==null && isFinite(c.gG)){
+    out.push({t: c.gG>=0?'up':'down', h:`GMV ${c.chLabel} ${cur} <b>${rp(c.gmvIni)}</b>, ${c.gG>=0?'naik':'turun'} <b>${f1(c.gG)}%</b> dari ${prev} (${rp(c.gmvLalu)}).`});
+  } else {
+    out.push({t:'na', h:`GMV ${c.chLabel} ${cur} <b>${rp(c.gmvIni)}</b>. Belum ada periode pembanding.`});
+  }
+  const comp = c.compared.map(r=> ({r, d:(r.gmvIni||0)-(r.gmvLalu||0), g:growth(r.gmvIni, r.gmvLalu)}));
+  if(comp.length){
+    const nm = (x)=> `${escapeHtml(x.r.shop)} (${x.r.platform})`;
+    const up = comp.filter(x=> x.d>0).sort((a,b)=> b.d-a.d), dn = comp.filter(x=> x.d<0).sort((a,b)=> a.d-b.d);
+    const totalUp = !(c.gG<0);
+    const lead = totalUp ? up[0] : dn[0], other = totalUp ? dn[0] : up[0];
+    if(lead) out.push({t: lead.d>0?'up':'down', h: lead.d>0
+      ? `Pendorong terbesar: <b>${nm(lead)}</b> +${rp(lead.d)} (+${f1(lead.g)}%).`
+      : `Penurunan terbesar: <b>${nm(lead)}</b> −${rp(-lead.d)} (−${f1(lead.g)}%).`});
+    if(other) out.push({t: other.d>0?'up':'down', h: other.d<0
+      ? `Perlu perhatian: <b>${nm(other)}</b> turun ${f1(other.g)}% (−${rp(-other.d)}).`
+      : `Tetap naik: <b>${nm(other)}</b> +${f1(other.g)}% (+${rp(other.d)}).`});
+    else if(comp.length>1) out.push({t: totalUp?'up':'down', h:`Semua ${comp.length} toko yang dibandingkan ${totalUp?'naik':'turun'}.`});
+  }
+  if(c.gmvIni){
+    const dom = c.shareT>=c.shareS ? ['TikTok', c.shareT] : ['Shopee', c.shareS];
+    let p = dom[1]>=99.95 ? `Seluruh GMV dari <b>${dom[0]}</b>` : `<b>${dom[0]}</b> menyumbang <b>${f1(dom[1])}%</b> GMV`;
+    if(c.ctrIni!==null){
+      p += `; CTR rata-rata <b>${f1(c.ctrIni)}%</b>`;
+      if(c.ctrDiff!==null && !c.ctrFlat) p += ` (${c.ctrDiff>0?'naik':'turun'} ${f1(c.ctrDiff)} poin)`;
+    }
+    out.push({t:'na', h: p + '.'});
+  }
+  if(c.trend && c.trend.length>=3){
+    const a = c.trend[0], b = c.trend[c.trend.length-1], g = growth(b.v, a.v);
+    if(g!==null && isFinite(g)) out.push({t: g>=0?'up':'down', h:`Tren ${c.trend.length} periode (${escapeHtml(a.lab)} → ${escapeHtml(b.lab)}): GMV ${g>=0?'naik':'turun'} <b>${f1(g)}%</b>.`});
+  }
+  if(c.missing) out.push({t:'na', h:`${c.missing} toko belum punya data pembanding, jadi belum dihitung di atas.`});
+  return out.slice(0, 6);
 }
 
 // ============================================================
@@ -3272,7 +3680,7 @@ const DB_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycby6wEdi2-enlkjBh
 const LS_DB = 'rb-db-v1';                // {url, code, name} — diingat di perangkat ini
 const DB_MAX = 4;
 const db = {url:'', code:'', name:'', role:null, files:[], busy:false, error:'', type:'weekly',
-            selected:new Set(), from:'', to:'', loadedAt:''};
+            selected:new Set(), loadedAt:'', manage:false, picker:null};
 (function(){
   const sv = lsGet(LS_DB, {}) || {};
   db.url = DB_URL_DEFAULT || String(sv.url||'');
@@ -3350,8 +3758,23 @@ function dbPeriodLabel(pp){
   const b = p(pp.end);
   return a.m===b.m ? `${a.d}–${b.d} ${M(b)} ${b.y}` : (a.y===b.y ? `${a.d} ${M(a)}–${b.d} ${M(b)} ${b.y}` : `${a.d} ${M(a)} ${a.y}–${b.d} ${M(b)} ${b.y}`);
 }
-function dbVisible(){
-  return dbPeriods().filter(pp=> (!db.from || pp.start >= db.from) && (!db.to || pp.start <= db.to));
+// ---- bantu: kelengkapan toko & label ringkas ----
+const DB_SERIES = ['#0B1D26','#5B7684','#C9A54A','#F1DD9E'];   // sama dengan warna batang grafik (terbaru → terlama)
+function dbShopTotal(type){
+  const by = {};
+  db.files.filter(f=> f.type===type).forEach(f=> (by[f.periodStart] = by[f.periodStart] || new Set()).add(f.shop));
+  return Math.max(0, ...Object.values(by).map(x=> x.size));
+}
+function dbShopCount(pp){ return new Set(pp.files.map(f=> f.shop)).size; }
+function dbBadge(pp, total){
+  const n = dbShopCount(pp);
+  return `<span class="cbadge ${n>=total?'full':'part'}" title="${n} dari ${total} toko">${n}/${total} toko</span>`;
+}
+function dbCellText(pp){
+  const d = (iso)=> +iso.slice(8,10), m = (iso)=> MONTHS_ID[+iso.slice(5,7)-1] || '?';
+  if(db.type==='monthly') return m(pp.start);
+  if(!pp.end) return String(d(pp.start));
+  return pp.start.slice(5,7)===pp.end.slice(5,7) ? `${d(pp.start)}–${d(pp.end)}` : `${d(pp.start)} ${m(pp.start)}–${d(pp.end)} ${m(pp.end)}`;
 }
 
 function renderDB(){
@@ -3371,70 +3794,142 @@ function renderDB(){
     };
     return;
   }
-
   if(!db.role){ el.innerHTML = ''; return; }   // belum masuk: halaman masuk yang tampil
+  if(db.role!=='edit') db.manage = false;
 
-  const periods = dbPeriods(), vis = dbVisible();
+  const periods = dbPeriods();
+  const total = dbShopTotal(db.type);
+  [...db.selected].forEach(st=>{ if(!periods.some(pp=> pp.start===st)) db.selected.delete(st); });
   const counts = {weekly: new Set(db.files.filter(f=>f.type==='weekly').map(f=>f.periodStart)).size,
                   monthly: new Set(db.files.filter(f=>f.type==='monthly').map(f=>f.periodStart)).size};
-  [...db.selected].forEach(st=>{ if(!periods.some(pp=> pp.start===st)) db.selected.delete(st); });
-  const full = db.selected.size >= DB_MAX;
   const roleBadge = (db.role==='edit' ? `<span class="db-role">● Tim · bisa simpan &amp; hapus</span>` : `<span class="db-role view">● Lihat saja</span>`)
     + (db.role==='edit' && db.name ? `<span class="db-user">Masuk sebagai <b>${escapeHtml(db.name)}</b></span>` : '');
   const right = `<div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap">${roleBadge}
       <button class="btn" id="dbReload" ${db.busy?'disabled':''}>${db.busy?'Memuat…':'↻ Muat ulang'}</button>
+      ${db.role==='edit' ? `<button class="btn" id="dbManage" aria-pressed="${db.manage}">${db.manage ? '✓ Selesai kelola' : 'Kelola data'}</button>` : ''}
       <button class="btn" id="dbLogout">Keluar</button></div>`;
-  const unit = db.type==='monthly' ? 'bulan' : 'minggu';
-  const list = vis.length ? vis.map(pp=>{
-    const on = db.selected.has(pp.start);
-    const shops = [...new Set(pp.files.map(f=> f.shop))];
-    const last = pp.files.map(f=> f.uploadedAt).sort().pop() || '';
-    const who = [...new Set(pp.files.map(f=> f.uploadedBy).filter(Boolean))].join(', ');
-    return `<label class="dbp${on?' on':''}${(!on && full)?' off':''}">
-      <input type="checkbox" data-start="${pp.start}" ${on?'checked':''} ${(!on && full)?'disabled':''}>
-      <div style="min-width:0; padding-right:18px">
-        <div class="t">${escapeHtml(dbPeriodLabel(pp))}</div>
-        <div class="m">${shops.length} toko · ${pp.files.length} file${last ? ` · ${escapeHtml(last)}` : ''}</div>
-        <details><summary>Lihat toko</summary><ul>${pp.files.map(f=> `<li>${escapeHtml(f.shop)} · ${f.platform}${f.platform==='Shopee' ? ' '+(f.channel==='video'?'Video':'Live') : ''}${f.uploadedBy ? ` · oleh ${escapeHtml(f.uploadedBy)}` : ''}</li>`).join('')}</ul>${who?'':''}</details>
-      </div>
-      ${db.role==='edit' ? `<button type="button" class="del" data-del="${pp.start}" title="Hapus data periode ini" aria-label="Hapus data periode ${escapeHtml(dbPeriodLabel(pp))}">✕</button>` : ''}
-    </label>`;
-  }).join('') : `<div class="db-empty">${periods.length ? 'Tidak ada periode di rentang tanggal ini.' : `Belum ada data ${db.type==='monthly'?'bulanan':'mingguan'} tersimpan.${db.role==='edit' ? ' Upload file di atas lalu klik “Simpan ke database”.' : ''}`}</div>`;
-  const selLabels = periods.filter(pp=> db.selected.has(pp.start)).sort((a,b)=> a.start.localeCompare(b.start)).map(dbPeriodLabel);
-
-  el.innerHTML = head(`Centang 1–${DB_MAX} periode yang ingin dibandingkan — boleh tidak berurutan. ${db.files.length} file tersimpan.`, right) +
-    `<div class="db-bar">
-      <div class="pfield"><label>Jenis data</label><div class="seg" role="group" aria-label="Jenis data">
+  const typeSeg = `<div class="pfield" style="margin-bottom:14px"><label>Jenis data</label><div class="seg" role="group" aria-label="Jenis data">
         <button type="button" data-dbtype="weekly" aria-pressed="${db.type==='weekly'}">Mingguan (${counts.weekly})</button>
-        <button type="button" data-dbtype="monthly" aria-pressed="${db.type==='monthly'}">Bulanan (${counts.monthly})</button></div></div>
-      <div class="pfield"><label for="dbFrom">Dari tanggal</label><input type="date" id="dbFrom" value="${db.from}"></div>
-      <div class="pfield"><label for="dbTo">Sampai tanggal</label><input type="date" id="dbTo" value="${db.to}"></div>
-      <div class="pfield"><label>Pilih cepat</label><div class="db-quick">
-        <button type="button" class="btn" data-quick="2">2 ${unit} terakhir</button>
-        <button type="button" class="btn" data-quick="4">4 ${unit} terakhir</button>
-        <button type="button" class="btn" data-quick="0">Kosongkan</button></div></div>
-    </div>
-    <div class="db-list">${list}</div>
-    <div class="db-foot"><span class="note">${db.selected.size ? `<b>${db.selected.size} dari ${DB_MAX}</b> dipilih: ${selLabels.map(escapeHtml).join(' · ')}` : `Belum ada periode dipilih (maks. ${DB_MAX}).`}</span>
-      <button class="btn primary" id="dbShow" ${(!db.selected.size || db.busy)?'disabled':''}>Tampilkan di dashboard</button></div>${err}`;
+        <button type="button" data-dbtype="monthly" aria-pressed="${db.type==='monthly'}">Bulanan (${counts.monthly})</button></div></div>`;
 
-  el.querySelectorAll('[data-dbtype]').forEach(b=> b.onclick = ()=>{ if(db.type!==b.dataset.dbtype){ db.type = b.dataset.dbtype; db.selected.clear(); renderDB(); } });
-  el.querySelector('#dbFrom').onchange = (e)=>{ db.from = e.target.value; renderDB(); };
-  el.querySelector('#dbTo').onchange = (e)=>{ db.to = e.target.value; renderDB(); };
-  el.querySelectorAll('[data-quick]').forEach(b=> b.onclick = ()=>{
-    const n = +b.dataset.quick; db.selected.clear();
-    dbVisible().slice(0, n).forEach(pp=> db.selected.add(pp.start));
-    renderDB();
+  // ---------- MODE KELOLA DATA (tim) ----------
+  if(db.manage){
+    const rows = periods.length ? periods.map(pp=>{
+      const last = pp.files.map(f=> f.uploadedAt).sort().pop() || '';
+      const files = [...pp.files].sort((a,b)=> (a.shop+a.platform).localeCompare(b.shop+b.platform));
+      return `<details><summary><span class="t">${escapeHtml(dbPeriodLabel(pp))}${dbBadge(pp, total)}</span>
+          <span class="m">${pp.files.length} file${last ? ' · ' + escapeHtml(last) : ''}</span>
+          <button type="button" class="delp" data-delp="${pp.start}">Hapus periode</button></summary>
+        <ul>${files.map(f=> `<li><span><b>${escapeHtml(f.shop)}</b> · ${f.platform}${f.platform==='Shopee' ? ' ' + (f.channel==='video'?'Video':'Live') : ''}${f.uploadedBy ? ` · oleh ${escapeHtml(f.uploadedBy)}` : ''}${f.uploadedAt ? ` · ${escapeHtml(f.uploadedAt)}` : ''}</span>
+          <button type="button" class="delf" data-delf="${escapeHtml(f.key)}" title="Hapus file ini" aria-label="Hapus ${escapeHtml(f.shop)} ${f.platform}">✕</button></li>`).join('')}</ul></details>`;
+    }).join('') : `<div class="db-empty">Belum ada data ${db.type==='monthly'?'bulanan':'mingguan'} tersimpan.</div>`;
+    el.innerHTML = head(`Mode kelola: hapus periode atau file yang salah export. ${db.files.length} file tersimpan.`, right) + typeSeg +
+      `<div class="dbmg">${rows}</div>${err}`;
+    bindCommon();
+    el.querySelectorAll('[data-delp]').forEach(b=> b.onclick = (e)=>{ e.preventDefault(); e.stopPropagation(); dbDeletePeriod(b.dataset.delp); });
+    el.querySelectorAll('[data-delf]').forEach(b=> b.onclick = (e)=>{ e.preventDefault(); dbDeleteFile(b.dataset.delf); });
+    return;
+  }
+
+  // ---------- MODE PILIH (semua) ----------
+  const wk = db.files.some(f=> f.type==='weekly'), mo = db.files.some(f=> f.type==='monthly');
+  const latest2 = (type)=>{
+    const map = {};
+    db.files.filter(f=> f.type===type).forEach(f=>{ const m = map[f.periodStart] = map[f.periodStart] || {start:f.periodStart, end:'', files:[]}; m.files.push(f); if(f.periodEnd > m.end) m.end = f.periodEnd; });
+    return Object.values(map).sort((a,b)=> b.start.localeCompare(a.start)).slice(0,2);
+  };
+  const qtxt = (type)=>{
+    const l2 = latest2(type);
+    if(l2.length<2) return 'Butuh minimal 2 periode tersimpan';
+    const keep = db.type; db.type = type;
+    const t = `${dbPeriodLabel(l2[0])} vs ${dbPeriodLabel(l2[1])}`;
+    db.type = keep; return t;
+  };
+  const quick = `<div class="pfield"><label>Pilihan cepat</label></div><div class="dbq">
+      <button type="button" data-q="weekly" ${latest2('weekly').length<2?'disabled':''}><b>Minggu ini vs minggu lalu</b><small>${escapeHtml(qtxt('weekly'))}</small></button>
+      <button type="button" data-q="monthly" ${latest2('monthly').length<2?'disabled':''}><b>Bulan ini vs bulan lalu</b><small>${escapeHtml(qtxt('monthly'))}</small></button>
+    </div>`;
+
+  const sel = periods.filter(pp=> db.selected.has(pp.start));            // terbaru dulu
+  const slots = sel.map((pp,i)=> `<div class="dbslot${db.picker && db.picker.target===pp.start ? ' active' : ''}">
+      <span class="sw2" style="background:${DB_SERIES[i] || DB_SERIES[3]}"></span>
+      <button type="button" class="pick" data-slot="${pp.start}" title="Ganti periode ini"><div class="n">Periode ${i+1}${i===0?' · terbaru':''}</div>
+        <div class="t">${escapeHtml(dbPeriodLabel(pp))}${dbBadge(pp, total)}</div></button>
+      <button type="button" class="x" data-unsel="${pp.start}" title="Hapus dari pilihan" aria-label="Hapus ${escapeHtml(dbPeriodLabel(pp))} dari pilihan">✕</button>
+    </div>`).join('') + (sel.length < DB_MAX && periods.length > sel.length
+      ? `<button type="button" class="dbslot add${db.picker && db.picker.target==='add' ? ' active' : ''}" id="dbAdd">+ ${sel.length ? 'Tambah pembanding' : 'Pilih periode'} (maks. ${DB_MAX})</button>` : '');
+
+  let cal = '';
+  if(db.picker){
+    const isAdd = db.picker.target==='add';
+    let body = '';
+    if(db.type==='weekly'){
+      const byMonth = {};
+      periods.forEach(pp=> (byMonth[pp.start.slice(0,7)] = byMonth[pp.start.slice(0,7)] || []).push(pp));
+      body = Object.keys(byMonth).sort().reverse().map(ym=>{
+        const cells = byMonth[ym].sort((a,b)=> a.start.localeCompare(b.start)).map(pp=> cellBtn(pp)).join('');
+        return `<div class="dbcal-row"><span class="ml">${MONTHS_ID[+ym.slice(5,7)-1]} ${ym.slice(0,4)}</span><div class="dbcal-cells">${cells}</div></div>`;
+      }).join('');
+    } else {
+      const years = [...new Set(periods.map(pp=> pp.start.slice(0,4)))].sort().reverse();
+      body = years.map(y=>{
+        const cells = MONTHS_ID.map((mn, mi)=>{
+          const pp = periods.find(x=> x.start.slice(0,7)===`${y}-${String(mi+1).padStart(2,'0')}`);
+          return pp ? cellBtn(pp) : `<button type="button" class="wk none" disabled>${mn}</button>`;
+        }).join('');
+        return `<div class="dbcal-row"><span class="ml">${y}</span><div class="dbcal-cells">${cells}</div></div>`;
+      }).join('');
+    }
+    cal = `<div class="dbcal" role="dialog" aria-label="Pilih periode">
+      <div class="dbcal-h"><b>${isAdd ? 'Pilih periode untuk ditambahkan' : 'Ganti periode yang dipilih'}</b>
+        <div class="dbcal-leg"><span><i style="background:var(--up-bg); border-color:#BFE0CC"></i>Semua toko</span><span><i style="background:var(--gold-soft); border-color:#F0DCA4"></i>Sebagian toko</span><span><i style="background:var(--navy)"></i>Sudah dipilih</span></div>
+        <button type="button" class="btn" id="dbCalClose">Tutup</button></div>
+      <div class="dbcal-body">${body || '<div class="db-empty">Belum ada data.</div>'}</div></div>`;
+  }
+  function cellBtn(pp){
+    const on = db.selected.has(pp.start), n = dbShopCount(pp);
+    const cls = on ? 'sel' : (n>=total ? 'full' : 'part');
+    return `<button type="button" class="wk ${cls}" data-cell="${pp.start}" title="${escapeHtml(dbPeriodLabel(pp))} · ${n}/${total} toko${on?' · sudah dipilih':''}" ${on?'aria-pressed="true"':''}>${escapeHtml(dbCellText(pp))}</button>`;
+  }
+
+  const empty = !periods.length ? `<div class="db-empty">Belum ada data ${db.type==='monthly'?'bulanan':'mingguan'} tersimpan.${db.role==='edit' ? ' Upload file di atas lalu klik “Simpan ke database”.' : ''}</div>` : '';
+  el.innerHTML = head(`Pilih 1–${DB_MAX} periode untuk dibandingkan — boleh tidak berurutan. ${db.files.length} file tersimpan.`, right) +
+    ((wk||mo) ? quick : '') + typeSeg + (empty || `<div class="dbslots">${slots}</div>${cal}`) +
+    `<div class="db-foot"><span class="note">${sel.length ? `<b>${sel.length} dari ${DB_MAX}</b> periode dipilih${sel.some(pp=> dbShopCount(pp) < total) ? ' · <span style="color:var(--gold-ink)">ada periode yang tokonya belum lengkap</span>' : ''}` : 'Belum ada periode dipilih.'}</span>
+      <button class="btn primary" id="dbShow" ${(!sel.length || db.busy)?'disabled':''}>Tampilkan di dashboard</button></div>${err}`;
+
+  bindCommon();
+  el.querySelectorAll('[data-q]').forEach(b=> b.onclick = ()=>{
+    db.type = b.dataset.q; db.picker = null;
+    db.selected = new Set(latest2(db.type).map(pp=> pp.start));
+    renderDB(); dbShowSelected();
   });
-  el.querySelectorAll('.dbp input[type=checkbox]').forEach(cb=> cb.onchange = ()=>{
-    if(cb.checked){ if(db.selected.size >= DB_MAX){ cb.checked = false; return; } db.selected.add(cb.dataset.start); }
-    else db.selected.delete(cb.dataset.start);
-    renderDB();
+  el.querySelectorAll('[data-slot]').forEach(b=> b.onclick = ()=>{
+    db.picker = (db.picker && db.picker.target===b.dataset.slot) ? null : {target:b.dataset.slot}; renderDB();
   });
-  el.querySelectorAll('[data-del]').forEach(b=> b.onclick = (e)=>{ e.preventDefault(); e.stopPropagation(); dbDeletePeriod(b.dataset.del); });
-  el.querySelector('#dbReload').onclick = ()=> dbRefresh(false);
-  el.querySelector('#dbLogout').onclick = gateLogout;
-  el.querySelector('#dbShow').onclick = dbShowSelected;
+  el.querySelectorAll('[data-unsel]').forEach(b=> b.onclick = ()=>{
+    db.selected.delete(b.dataset.unsel); if(db.picker && db.picker.target===b.dataset.unsel) db.picker = null; renderDB();
+  });
+  const add = el.querySelector('#dbAdd');
+  if(add) add.onclick = ()=>{ db.picker = (db.picker && db.picker.target==='add') ? null : {target:'add'}; renderDB(); };
+  const close = el.querySelector('#dbCalClose');
+  if(close) close.onclick = ()=>{ db.picker = null; renderDB(); };
+  el.querySelectorAll('[data-cell]').forEach(b=> b.onclick = ()=>{
+    const st = b.dataset.cell;
+    if(db.selected.has(st)) return;
+    if(db.picker.target==='add'){ if(db.selected.size >= DB_MAX) return; db.selected.add(st); }
+    else { db.selected.delete(db.picker.target); db.selected.add(st); }
+    db.picker = null; renderDB();
+  });
+  el.querySelector('#dbShow').onclick = ()=>{ db.picker = null; dbShowSelected(); };
+
+  function bindCommon(){
+    el.querySelectorAll('[data-dbtype]').forEach(b=> b.onclick = ()=>{ if(db.type!==b.dataset.dbtype){ db.type = b.dataset.dbtype; db.selected.clear(); db.picker = null; renderDB(); } });
+    el.querySelector('#dbReload').onclick = ()=> dbRefresh(false);
+    el.querySelector('#dbLogout').onclick = gateLogout;
+    const mg = el.querySelector('#dbManage');
+    if(mg) mg.onclick = ()=>{ db.manage = !db.manage; db.picker = null; renderDB(); };
+  }
 }
 
 async function dbRefresh(isLogin, silent){
@@ -3575,6 +4070,22 @@ async function dbSaveUploaded(){
   const bad = todo.filter(f=> !f.periodStart || f.periodStart==='0000-00-00');
   if(bad.length){ alert(`Tanggal periode tidak terbaca di: ${bad.map(f=> f.fileName).join(', ')}. File ini tidak bisa disimpan.`); return; }
   const recs = todo.map(fileToRecord);
+  // peringatan: mingguan harus Senin–Minggu (7 hari), bulanan tanggal 1 s/d akhir bulan
+  const HARI = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+  const odd = [];
+  recs.forEach(r=>{
+    const st = new Date(r.periodStart + 'T00:00:00');
+    const en = r.periodEnd ? new Date(r.periodEnd + 'T00:00:00') : null;
+    const days = en ? Math.round((en - st)/86400000) + 1 : null;
+    if(r.type==='weekly'){
+      if(st.getDay()!==1 || (days!==null && days!==7)){
+        odd.push(`• ${r.shop} (${r.platform}): ${r.periodLabel || r.periodStart} — mulai hari ${HARI[st.getDay()]}${days!==null ? `, ${days} hari` : ''}`);
+      }
+    } else if(st.getDate()!==1 || (en && new Date(en.getTime()+86400000).getDate()!==1)){
+      odd.push(`• ${r.shop} (${r.platform}): ${r.periodLabel || r.periodStart} — bukan satu bulan penuh`);
+    }
+  });
+  if(odd.length && !confirm(`Peringatan — periode ini tidak standar:\n${odd.slice(0,8).join('\n')}${odd.length>8 ? `\n…dan ${odd.length-8} lainnya` : ''}\n\nLaporan mingguan seharusnya Senin–Minggu (7 hari), bulanan tanggal 1 sampai akhir bulan. Periode yang tidak sama tidak akan tergabung dengan toko lain. Tetap simpan?`)) return;
   const dupKeys = recs.map(r=> r.key).filter((k,i,a)=> a.indexOf(k)!==i);
   if(dupKeys.length && !confirm(`Ada file ganda untuk toko & periode yang sama (${[...new Set(dupKeys)].join(', ')}). Yang terakhir akan dipakai. Lanjut?`)) return;
   const existing = new Set(db.files.map(f=> f.key));
@@ -3604,6 +4115,19 @@ async function dbDeletePeriod(start){
     db.selected.delete(start);
     db.busy = false;
     showToast(`Data ${dbPeriodLabel(pp)} dihapus`);
+    await dbRefresh(false);
+  }catch(e){ db.busy = false; db.error = 'Gagal menghapus: ' + (e.message || e); renderDB(); }
+}
+
+async function dbDeleteFile(key){
+  const f = db.files.find(x=> x.key===key);
+  if(!f) return;
+  if(!confirm(`Hapus data ${f.shop} · ${f.platform}${f.platform==='Shopee' ? ' ' + (f.channel==='video'?'Video':'Live') : ''} untuk periode ${f.periodLabel || f.periodStart}? Ini tidak bisa dibatalkan.`)) return;
+  db.busy = true; renderDB();
+  try{
+    await dbCall('delete', {keys:[key]});
+    db.busy = false;
+    showToast(`Data ${f.shop} dihapus`);
     await dbRefresh(false);
   }catch(e){ db.busy = false; db.error = 'Gagal menghapus: ' + (e.message || e); renderDB(); }
 }
@@ -3669,8 +4193,178 @@ document.addEventListener('click', (e)=>{
   if(!e.target.closest('.dl-pop')) closeMenus();
 });
 document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closeMenus(); });
+
+// ============================================================
+// V8 — FILTER GLOBAL, MODE GELAP, MODE PRESENTASI
+// ============================================================
+const filt = {plat:'all', shop:'all'};
+let filtDepth = 0;
+function filtActive(){ return filt.plat!=='all' || filt.shop!=='all'; }
+function filtPass(f){ return (filt.plat==='all' || f.platform===filt.plat) && (filt.shop==='all' || (f.shop||'')===filt.shop); }
+// jalankan fn dengan `uploaded` yang sudah difilter, lalu kembalikan lagi (juga untuk fungsi async)
+function withFilter(fn){
+  if(filtDepth>0 || !filtActive()) return fn();
+  const saved = uploaded;
+  uploaded = uploaded.filter(filtPass); filtDepth++;
+  const done = ()=>{ filtDepth--; uploaded = saved; };
+  let r;
+  try{ r = fn(); }catch(e){ done(); throw e; }
+  if(r && typeof r.then==='function') return r.finally(done);
+  done(); return r;
+}
+['renderKPI','renderTable','renderMultiTable','renderTopProducts','renderCharts'].forEach(n=>{
+  const orig = window[n];
+  window[n] = function(){ const a = arguments; return withFilter(()=> orig.apply(this, a)); };
+});
+
+// ---------- tema grafik (layar gelap); file PNG selalu versi terang ----------
+const CHART_LIGHT = Object.assign({}, CHART_COLORS, {bg:'#FFFFFF'});
+const CHART_DARK = {ini:'#FBD784', lalu:'#5E8596', ink:'#E8EEF0', muted:'#9AACB4', border:'#2A3F48', zebra:'#132831', grid:'#22363F',
+  shopee:'#EE4D2D', tiktok:'#C9D3D8', bg:'#10232C'};
+const SERIES_LIGHT = JSON.parse(JSON.stringify(SERIES_COLORS));
+const SERIES_DARK = {2:['#FBD784','#5E8596'], 3:['#FBD784','#8FB0BF','#4A6A79'], 4:['#FBD784','#C9A54A','#8FB0BF','#4A6A79']};
+function isDark(){ return document.documentElement.classList.contains('dark'); }
+function setChartTheme(dark){
+  Object.assign(CHART_COLORS, dark ? CHART_DARK : CHART_LIGHT);
+  const src = dark ? SERIES_DARK : SERIES_LIGHT;
+  Object.keys(src).forEach(k=> SERIES_COLORS[k] = src[k].slice());
+}
+['chart-all','chart-gmv','chart-ctr','chart-pcs'].forEach(k=>{
+  const orig = DL_ACTIONS[k];
+  DL_ACTIONS[k] = async (el)=>{
+    const dark = isDark();
+    if(dark){ setChartTheme(false); renderCharts(); }
+    try{ await withFilter(()=> orig(el)); }
+    finally{ if(dark){ setChartTheme(true); renderCharts(); } }
+  };
+});
+Object.keys(DL_ACTIONS).forEach(k=>{
+  if(/^chart-/.test(k)) return;
+  const orig = DL_ACTIONS[k];
+  DL_ACTIONS[k] = (el)=> withFilter(()=> orig(el));
+});
+
+// ---------- bar filter ----------
+const fShop = document.getElementById('fShop');
+function renderFilterBar(){
+  const shops = [...new Set(uploaded.map(f=> f.shop).filter(Boolean))].sort((a,b)=> a.localeCompare(b));
+  if(filt.shop!=='all' && !shops.includes(filt.shop)) filt.shop = 'all';
+  if(fShop){
+    fShop.innerHTML = `<option value="all">Semua toko</option>` + shops.map(s=> `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');
+    fShop.value = filt.shop;
+  }
+  document.querySelectorAll('#fPlat button').forEach(b=> b.setAttribute('aria-pressed', String(b.dataset.fplat===filt.plat)));
+  const rs = document.getElementById('fbReset'); if(rs) rs.hidden = !filtActive();
+  const per = document.getElementById('fbPer');
+  if(per){
+    const l = L();
+    per.innerHTML = uploaded.length ? `<b>${l.monthly?'Bulanan':'Mingguan'}</b> · ${escapeHtml(vsText(activeTab))}` : 'Belum ada data';
+    per.title = per.textContent;
+  }
+  presBrandText();
+}
+const _render = render;
+window.render = function(){ _render(); renderFilterBar(); };
+function applyFilter(){
+  renderFilterBar();
+  renderHeroStatus(); renderKPI(); renderTable(); renderTopProducts(); renderCharts();
+}
+document.querySelectorAll('#fPlat button').forEach(b=> b.addEventListener('click', ()=>{ filt.plat = b.dataset.fplat; applyFilter(); }));
+if(fShop) fShop.addEventListener('change', ()=>{ filt.shop = fShop.value; applyFilter(); });
+const fbReset = document.getElementById('fbReset');
+if(fbReset) fbReset.addEventListener('click', ()=>{ filt.plat = 'all'; filt.shop = 'all'; applyFilter(); showToast('Filter dihapus'); });
+document.querySelectorAll('.tab').forEach(t=> t.addEventListener('click', ()=>{ renderFilterBar(); syncPresCh(); }));
+
+// bayangan kolom Toko saat tabel digeser ke samping
+document.addEventListener('scroll', (e)=>{
+  const t = e.target;
+  if(t && t.classList && t.classList.contains('table-scroll')) t.classList.toggle('scrolled', t.scrollLeft > 2);
+}, true);
+
+// ---------- mode gelap ----------
+const LS_THEME = 'rb-theme-v1';
+function setTheme(dark, persist){
+  document.documentElement.classList.toggle('dark', dark);
+  setChartTheme(dark);
+  const sw = document.getElementById('darkSw'); if(sw) sw.setAttribute('aria-pressed', String(dark));
+  const tb = document.getElementById('themeBtn');
+  if(tb){
+    tb.setAttribute('aria-label', dark ? 'Ganti ke mode terang' : 'Ganti ke mode gelap');
+    tb.title = tb.getAttribute('aria-label');
+    tb.innerHTML = `<svg aria-hidden="true"><use href="#${dark?'i-sun':'i-moon'}"/></svg>`;
+  }
+  if(persist){ try{ localStorage.setItem(LS_THEME, dark ? 'dark' : 'light'); }catch(e){} }
+  renderCharts();
+}
+(function initTheme(){
+  let saved = null; try{ saved = localStorage.getItem(LS_THEME); }catch(e){}
+  setTheme(saved==='dark', false);
+  const flip = ()=>{ const d = !isDark(); setTheme(d, true); showToast(d ? 'Mode gelap' : 'Mode terang'); };
+  const sw = document.getElementById('darkSw'); if(sw) sw.addEventListener('click', flip);
+  const tb = document.getElementById('themeBtn'); if(tb) tb.addEventListener('click', flip);
+})();
+
+// ---------- mode presentasi ----------
+const slides = [...document.querySelectorAll('.slide')];
+let presIdx = 0;
+function presBrandText(){
+  const el = document.getElementById('presPer'); if(!el) return;
+  const l = L();
+  const parts = [`${activeTab==='video'?'Video':'Live'} · ${l.monthly?'Bulanan':'Mingguan'}`, vsText(activeTab)];
+  if(filtActive()) parts.push('Filter: ' + [filt.plat!=='all'?filt.plat:'', filt.shop!=='all'?filt.shop:''].filter(Boolean).join(' · '));
+  el.textContent = parts.join(' — ');
+}
+function syncPresCh(){
+  document.querySelectorAll('#presBar [data-pch]').forEach(b=> b.setAttribute('aria-pressed', String(b.dataset.pch===activeTab)));
+  presBrandText();
+}
+function presShow(i){
+  presIdx = Math.max(0, Math.min(slides.length-1, i));
+  slides.forEach((s,j)=> s.classList.toggle('cur', j===presIdx));
+  const s = slides[presIdx]; if(s) s.scrollTop = 0;
+  const c = document.getElementById('presCount'); if(c) c.textContent = `${presIdx+1} / ${slides.length}`;
+  if(s && s.querySelector('#chartsWrap')) requestAnimationFrame(()=>{ lastChartW = 0; renderCharts(); });
+}
+function presEnter(){
+  // mulai dari bagian yang sedang dilihat
+  let start = 0;
+  slides.forEach((s,j)=>{ if(s.getBoundingClientRect().top < window.innerHeight*0.4) start = j; });
+  document.documentElement.classList.add('present');
+  syncPresCh();
+  presShow(start);
+  const de = document.documentElement;
+  if(de.requestFullscreen && !document.fullscreenElement){ de.requestFullscreen().catch(()=>{}); }
+}
+function presExit(){
+  if(!document.documentElement.classList.contains('present')) return;
+  const target = slides[presIdx];
+  document.documentElement.classList.remove('present');
+  slides.forEach(s=> s.classList.remove('cur'));
+  if(document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(()=>{});
+  requestAnimationFrame(()=>{
+    lastChartW = 0; renderCharts();
+    if(target) window.scrollTo({top: target.getBoundingClientRect().top + window.scrollY - 70});
+  });
+}
+document.querySelectorAll('[data-present]').forEach(b=> b.addEventListener('click', presEnter));
+document.getElementById('presPrev').addEventListener('click', ()=> presShow(presIdx-1));
+document.getElementById('presNext').addEventListener('click', ()=> presShow(presIdx+1));
+document.getElementById('presExit').addEventListener('click', presExit);
+document.querySelectorAll('#presBar [data-pch]').forEach(b=> b.addEventListener('click', ()=>{
+  const t = document.querySelector(`.tab[data-tab="${b.dataset.pch}"]`); if(t) t.click();
+  const s = slides[presIdx]; if(s && s.querySelector('#chartsWrap')) renderCharts();
+}));
+document.addEventListener('keydown', (e)=>{
+  if(!document.documentElement.classList.contains('present')) return;
+  if(e.target && /^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName)) return;
+  if(e.key==='ArrowRight' || e.key==='PageDown'){ e.preventDefault(); presShow(presIdx+1); }
+  else if(e.key==='ArrowLeft' || e.key==='PageUp'){ e.preventDefault(); presShow(presIdx-1); }
+  else if(e.key==='Escape'){ presExit(); }
+});
+document.addEventListener('fullscreenchange', ()=>{ if(!document.fullscreenElement) presExit(); });
+
 // init
-loadUserMap().then(render);
+loadUserMap().then(()=> render());
 render();
 renderDB();
 if(db.url && db.code) gateLogin(false);        // sudah pernah masuk di perangkat ini -> masuk otomatis
