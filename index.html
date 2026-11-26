@@ -546,7 +546,7 @@ html.role-view .db-card{margin:-72px 22px 0; position:relative; z-index:2; borde
 .wk{font-family:var(--body); font-size:12px; font-weight:600; min-width:64px; padding:7px 9px; border-radius:8px; cursor:pointer; border:1px solid var(--border); background:#fff; color:var(--ink);}
 .wk.full{background:var(--up-bg); color:#1E5C3F; border-color:#BFE0CC;}
 .wk.part{background:var(--gold-soft); color:#7A5A0E; border-color:#F0DCA4;}
-.wk.sel{background:var(--navy); color:var(--gold); border-color:var(--navy);}
+.wk.sel{cursor:pointer; background:var(--navy); color:var(--gold); border-color:var(--navy);}
 .wk.none{opacity:.35; cursor:default;}
 .wk:hover:not(.none):not(.sel){border-color:var(--navy);}
 .wk:focus-visible, .dbslot .pick:focus-visible, .dbq button:focus-visible{outline:2px solid var(--gold-2); outline-offset:2px;}
@@ -4004,17 +4004,15 @@ function renderDB(){
     </div>`;
 
   const sel = periods.filter(pp=> db.selected.has(pp.start));            // terbaru dulu
-  const slots = sel.map((pp,i)=> `<div class="dbslot${db.picker && db.picker.target===pp.start ? ' active' : ''}">
+  const slots = sel.map((pp,i)=> `<div class="dbslot">
       <span class="sw2" style="background:${DB_SERIES[i] || DB_SERIES[3]}"></span>
-      <button type="button" class="pick" data-slot="${pp.start}" title="Ganti periode ini"><div class="n">Periode ${i+1}${i===0?' · terbaru':''}</div>
-        <div class="t">${escapeHtml(dbPeriodLabel(pp))}${dbBadge(pp, total)}</div></button>
+      <div class="pick" style="cursor:default"><div class="n">Periode ${i+1}${i===0?' · terbaru':''}</div>
+        <div class="t">${escapeHtml(dbPeriodLabel(pp))}${dbBadge(pp, total)}</div></div>
       <button type="button" class="x" data-unsel="${pp.start}" title="Hapus dari pilihan" aria-label="Hapus ${escapeHtml(dbPeriodLabel(pp))} dari pilihan">✕</button>
-    </div>`).join('') + (sel.length < DB_MAX && periods.length > sel.length
-      ? `<button type="button" class="dbslot add${db.picker && db.picker.target==='add' ? ' active' : ''}" id="dbAdd">+ ${sel.length ? 'Tambah pembanding' : 'Pilih periode'} (maks. ${DB_MAX})</button>` : '');
-
+    </div>`).join('') + (sel.length ? '' : `<div class="dbslot add" style="cursor:default">Klik kotak di kalender untuk memilih 2–${DB_MAX} periode</div>`);
+  if(db.calOpen===undefined) db.calOpen = true;
   let cal = '';
-  if(db.picker){
-    const isAdd = db.picker.target==='add';
+  if(db.calOpen && periods.length){
     let body = '';
     if(db.type==='weekly'){
       const byMonth = {};
@@ -4033,23 +4031,22 @@ function renderDB(){
         return `<div class="dbcal-row"><span class="ml">${y}</span><div class="dbcal-cells">${cells}</div></div>`;
       }).join('');
     }
-    cal = `<div class="dbcal" role="dialog" aria-label="Pilih periode">
-      <div class="dbcal-h"><b>${isAdd ? 'Pilih periode untuk ditambahkan' : 'Ganti periode yang dipilih'}</b>
-        <div class="dbcal-leg"><span><i style="background:var(--up-bg); border-color:#BFE0CC"></i>Semua toko</span><span><i style="background:var(--gold-soft); border-color:#F0DCA4"></i>Sebagian toko</span><span><i style="background:var(--navy)"></i>Sudah dipilih</span></div>
-        <button type="button" class="btn" id="dbCalClose">Tutup</button></div>
+    cal = `<div class="dbcal" role="group" aria-label="Kalender periode">
+      <div class="dbcal-h"><b>Klik untuk memilih atau membatalkan · maks. ${DB_MAX} periode</b>
+        <div class="dbcal-leg"><span><i style="background:var(--up-bg); border-color:#BFE0CC"></i>Semua toko</span><span><i style="background:var(--gold-soft); border-color:#F0DCA4"></i>Sebagian toko</span><span><i style="background:var(--navy); border-color:var(--navy)"></i>Dipilih</span></div>
+        <button type="button" class="btn" id="dbCalClose">Sembunyikan kalender</button></div>
       <div class="dbcal-body">${body || '<div class="db-empty">Belum ada data.</div>'}</div></div>`;
   }
   function cellBtn(pp){
     const on = db.selected.has(pp.start), n = dbShopCount(pp);
     const cls = on ? 'sel' : (n>=total ? 'full' : 'part');
-    return `<button type="button" class="wk ${cls}" data-cell="${pp.start}" title="${escapeHtml(dbPeriodLabel(pp))} · ${n}/${total} toko${on?' · sudah dipilih':''}" ${on?'aria-pressed="true"':''}>${escapeHtml(dbCellText(pp))}</button>`;
+    return `<button type="button" class="wk ${cls}" data-cell="${pp.start}" title="${escapeHtml(dbPeriodLabel(pp))} · ${n}/${total} toko${on?' · klik untuk membatalkan':''}" aria-pressed="${on}">${escapeHtml(dbCellText(pp))}</button>`;
   }
 
   const empty = !periods.length ? `<div class="db-empty">Belum ada data ${db.type==='monthly'?'bulanan':'mingguan'} tersimpan.${db.role==='edit' ? ' Upload file di atas lalu klik “Simpan ke database”.' : ''}</div>` : '';
   el.innerHTML = head(`Pilih 1–${DB_MAX} periode untuk dibandingkan — boleh tidak berurutan. ${db.files.length} file tersimpan.`, right) +
-    ((wk||mo) ? quick : '') + typeSeg + (empty || `<div class="dbslots">${slots}</div>${cal}`) +
-    `<div class="db-foot"><span class="note">${sel.length ? `<b>${sel.length} dari ${DB_MAX}</b> periode dipilih${sel.some(pp=> dbShopCount(pp) < total) ? ' · <span style="color:var(--gold-ink)">ada periode yang tokonya belum lengkap</span>' : ''}` : 'Belum ada periode dipilih.'}</span>
-      <button class="btn primary" id="dbShow" ${(!sel.length || db.busy)?'disabled':''}>Tampilkan di dashboard</button></div>${err}`;
+    ((wk||mo) ? quick : '') + typeSeg + (empty || `<div class="dbslots">${slots}</div>${cal || (periods.length ? `<button type="button" class="btn" id="dbCalOpen" style="margin-top:12px">📅 Tampilkan kalender</button>` : '')}`) +
+    `<div class="db-foot"><span class="note">${db.busy ? '<b>Memuat data…</b>' : sel.length>=2 ? `<b>${sel.length} dari ${DB_MAX}</b> periode tampil di dashboard${sel.some(pp=> dbShopCount(pp) < total) ? ' · <span style="color:var(--gold-ink)">ada periode yang tokonya belum lengkap</span>' : ''}` : sel.length===1 ? '<b>1 periode dipilih</b> · pilih 1 lagi untuk menampilkan di dashboard' : 'Belum ada periode dipilih'}</span></div>${err}`;
 
   bindCommon();
   el.querySelectorAll('[data-q]').forEach(b=> b.onclick = ()=>{
@@ -4057,27 +4054,24 @@ function renderDB(){
     db.selected = new Set(latest2(db.type).map(pp=> pp.start));
     renderDB(); dbShowSelected();
   });
-  el.querySelectorAll('[data-slot]').forEach(b=> b.onclick = ()=>{
-    db.picker = (db.picker && db.picker.target===b.dataset.slot) ? null : {target:b.dataset.slot}; renderDB();
-  });
-  el.querySelectorAll('[data-unsel]').forEach(b=> b.onclick = ()=>{
-    db.selected.delete(b.dataset.unsel); if(db.picker && db.picker.target===b.dataset.unsel) db.picker = null; renderDB();
-  });
-  const add = el.querySelector('#dbAdd');
-  if(add) add.onclick = ()=>{ db.picker = (db.picker && db.picker.target==='add') ? null : {target:'add'}; renderDB(); };
+  const autoShow = ()=>{ if(db.selected.size>=2) dbShowSelected(true); };
+  el.querySelectorAll('[data-unsel]').forEach(b=> b.onclick = ()=>{ db.selected.delete(b.dataset.unsel); renderDB(); autoShow(); });
   const close = el.querySelector('#dbCalClose');
-  if(close) close.onclick = ()=>{ db.picker = null; renderDB(); };
+  if(close) close.onclick = ()=>{ db.calOpen = false; renderDB(); };
+  const open = el.querySelector('#dbCalOpen');
+  if(open) open.onclick = ()=>{ db.calOpen = true; renderDB(); };
   el.querySelectorAll('[data-cell]').forEach(b=> b.onclick = ()=>{
     const st = b.dataset.cell;
-    if(db.selected.has(st)) return;
-    if(db.picker.target==='add'){ if(db.selected.size >= DB_MAX) return; db.selected.add(st); }
-    else { db.selected.delete(db.picker.target); db.selected.add(st); }
-    db.picker = null; renderDB();
+    if(db.selected.has(st)) db.selected.delete(st);
+    else {
+      if(db.selected.size >= DB_MAX){ showToast(`Maksimal ${DB_MAX} periode. Batalkan salah satu dulu.`); return; }
+      db.selected.add(st);
+    }
+    renderDB(); autoShow();
   });
-  el.querySelector('#dbShow').onclick = ()=>{ db.picker = null; dbShowSelected(); };
 
   function bindCommon(){
-    el.querySelectorAll('[data-dbtype]').forEach(b=> b.onclick = ()=>{ if(db.type!==b.dataset.dbtype){ db.type = b.dataset.dbtype; db.selected.clear(); db.picker = null; renderDB(); } });
+    el.querySelectorAll('[data-dbtype]').forEach(b=> b.onclick = ()=>{ if(db.type!==b.dataset.dbtype){ db.type = b.dataset.dbtype; db.selected.clear(); renderDB(); } });
     el.querySelector('#dbReload').onclick = ()=> dbRefresh(false);
     el.querySelector('#dbLogout').onclick = gateLogout;
     const mg = el.querySelector('#dbManage');
@@ -4193,9 +4187,11 @@ function gateLogout(msg){
   renderGate('code', typeof msg==='string' ? msg : '');
 }
 
-async function dbShowSelected(){
+let dbShowSeq = 0;
+async function dbShowSelected(auto){
   const starts = [...db.selected].sort();
   if(!starts.length) return;
+  const seq = ++dbShowSeq;
   const recs = db.files.filter(f=> f.type===db.type && db.selected.has(f.periodStart));
   const unsaved = uploaded.filter(f=> !f.fromDb).length;
   if(unsaved && !confirm(`Ada ${unsaved} file yang belum disimpan ke database. Ganti tampilan dengan data tersimpan? File yang belum disimpan akan hilang dari layar.`)) return;
@@ -4203,14 +4199,16 @@ async function dbShowSelected(){
   try{
     const tKeys = recs.filter(r=> r.platform==='TikTok').map(r=> r.key);
     const prods = tKeys.length ? (await dbCall('products', {keys: tKeys})).products || {} : {};
+    if(seq!==dbShowSeq) return;   // sudah ada pilihan yang lebih baru
     uploaded = recs.map(r=> recordToFile(r, prods[r.key]));
     labelState.mode = db.type;
     db.busy = false;
     render(); renderDB();
-    showToast(`${starts.length} periode dimuat dari database`);
-    const k = document.getElementById('ringkasan');
+    showToast(`${starts.length} periode tampil di dashboard`);
+    const k = auto ? null : document.getElementById('ringkasan');
     if(k) window.scrollTo({top: k.getBoundingClientRect().top + window.scrollY - 14, behavior:'smooth'});
   }catch(e){
+    if(seq!==dbShowSeq) return;
     db.busy = false; db.error = e.message || String(e); renderDB();
   }
 }
@@ -4820,20 +4818,23 @@ function pcSVG(mk, W, forExport){
   const plats = ['TikTok','Shopee'].map(p=> ({p, rows: rowsAll.filter(r=> r.platform===p).sort((a,b)=> pcLast(b)-pcLast(a))})).filter(x=> x.rows.length);
   const side = W>=860 && plats.length>1, gap = 40;
   const pw = side ? (W-gap)/2 : W;
-  const headH = 44, compact = pw < 560, rowH = compact ? 58 : 46;
+  const headH = 44, compact = pw < (d.labs.length>=3 ? 560 : 440), rowH = compact ? 58 : 46;
   let legH = 34;
   const nMax = Math.max(...plats.map(x=> x.rows.length));
   const panelH = (n)=> headH + n*rowH;
   const nP = d.labs.length;
   let g = '';
   // legenda (pindah baris bila sempit)
+  const trendMode = nP>=3;
   const legItems = [{t:d.labs[nP-1], bar:true}];
-  for(let i=nP-2, k=0; i>=0; i--, k++) legItems.push({t:d.labs[i], k});
+  if(trendMode) legItems.push({t:`Tren ${d.labs[0]} → ${d.labs[nP-1]}`, spark:true});
+  else for(let i=nP-2, k=0; i>=0; i--, k++) legItems.push({t:d.labs[i], k});
   let lx = 0, ly = 0;
   legItems.forEach(it=>{
-    const w = (it.bar ? 32 : 13) + String(it.t).length*7.2 + 16;
+    const w = (it.bar ? 32 : it.spark ? 34 : 13) + String(it.t).length*7.2 + 16;
     if(lx>0 && lx + w > W){ lx = 0; ly += 24; }
-    if(it.bar) g += `<rect x="${lx}" y="${ly+9}" width="22" height="12" rx="6" fill="${C.bar}"/><text x="${lx+30}" y="${ly+20}" font-size="12.5" fill="${C.muted}">${pcEsc(it.t)}</text>`;
+    if(it.spark) g += `<polyline points="${lx},${ly+20} ${lx+8},${ly+13} ${lx+16},${ly+16} ${lx+24},${ly+8}" fill="none" stroke="${C.muted}" stroke-width="2" stroke-linejoin="round"/><circle cx="${lx+24}" cy="${ly+8}" r="2.6" fill="${C.muted}"/><text x="${lx+32}" y="${ly+20}" font-size="12.5" fill="${C.muted}">${pcEsc(it.t)}</text>`;
+    else if(it.bar) g += `<rect x="${lx}" y="${ly+9}" width="22" height="12" rx="6" fill="${C.bar}"/><text x="${lx+30}" y="${ly+20}" font-size="12.5" fill="${C.muted}">${pcEsc(it.t)}</text>`;
     else g += `<rect x="${lx}" y="${ly+5}" width="3.5" height="20" rx="1.5" fill="${C.ticks[Math.min(it.k,2)]}"/><text x="${lx+11}" y="${ly+20}" font-size="12.5" fill="${C.muted}">${pcEsc(it.t)}</text>`;
     lx += w;
   });
@@ -4858,8 +4859,9 @@ function pcSVG(mk, W, forExport){
     g += `<text x="${x0}" y="${y0+22}" font-size="13" font-weight="800" letter-spacing="1.5" fill="${C.gold}">${pcEsc(head)}</text>`;
     if(m.sum){ g += pill(x0+pw, y0+17, hg).s; }
     g += `<rect x="${x0}" y="${y0+34}" width="${pw}" height="1" fill="${C.line}"/>`;
+    const sparkW = trendMode ? 78 : 0;
     const labelW = compact ? 0 : Math.min(150, pw*0.27), valW = compact ? 0 : 86, pillW = compact ? 0 : 76;
-    const tx0 = x0 + labelW, tw = pw - labelW - valW - pillW - (compact ? 0 : 10);
+    const tx0 = x0 + labelW, tw = pw - labelW - valW - pillW - (compact ? 0 : sparkW + 10);
     const max = Math.max(1e-9, ...pl.rows.map(r=> Math.max(...r.vals.filter(v=> v!=null))));
     pl.rows.forEach((r, i)=>{
       const yr = y0 + headH + i*rowH + rowH/2, last = pcLast(r), isTop = r===topRow;
@@ -4868,12 +4870,23 @@ function pcSVG(mk, W, forExport){
       g += `<text x="${x0}" y="${yt+5}" font-size="14" font-weight="${isTop?800:600}" fill="${C.ink}">${pcEsc(name)}</text>`;
       g += `<rect x="${tx0}" y="${ym-9}" width="${tw}" height="18" rx="9" fill="${C.track}"/>`;
       g += `<rect x="${tx0}" y="${ym-9}" width="${Math.max(4, last/max*tw).toFixed(1)}" height="18" rx="9" fill="${isTop?C.top:C.bar}"/>`;
-      for(let j=r.vals.length-2, k=0; j>=0; j--, k++){
+      if(!trendMode) for(let j=r.vals.length-2, k=0; j>=0; j--, k++){
         const v = r.vals[j]; if(v==null) continue;
         const px = tx0 + Math.min(1, v/max)*tw;
         g += `<rect x="${(px-2).toFixed(1)}" y="${ym-14}" width="4" height="28" rx="2" fill="${C.ticks[Math.min(k,2)]}" stroke="${C.bg}" stroke-width="1"/>`;
       }
-      const pillSpace = 84;
+      const pillSpace = 84 + (compact && trendMode ? sparkW + 10 : 0);
+      if(trendMode){
+        const sx0 = compact ? x0+pw-84-sparkW+6 : tx0+tw+10+valW, sw = sparkW-16, sy = yt;
+        const pts = r.vals.map((v,j)=> v==null ? null : {j, v}).filter(Boolean);
+        if(pts.length>=2){
+          const vs = pts.map(q=> q.v), mn = Math.min(...vs), mx = Math.max(...vs), span = (mx-mn) || 1;
+          const X = (j)=> sx0 + j*(sw/(r.vals.length-1)), Y = (v)=> sy + 9 - ((v-mn)/span)*18;
+          const pv2 = pcPrev(r), col = (pv2==null || last>=pv2) ? C.up : C.down;
+          g += `<polyline points="${pts.map(q=> X(q.j).toFixed(1)+','+Y(q.v).toFixed(1)).join(' ')}" fill="none" stroke="${col}" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>`;
+          pts.forEach((q,k)=>{ const lastPt = k===pts.length-1; g += `<circle cx="${X(q.j).toFixed(1)}" cy="${Y(q.v).toFixed(1)}" r="${lastPt?3.6:2}" fill="${lastPt?col:C.bg}" stroke="${col}" stroke-width="1.6"/>`; });
+        }
+      }
       if(compact) g += `<text x="${x0+pw-pillSpace}" y="${yt+5}" text-anchor="end" font-size="14" font-weight="800" fill="${C.ink}">${pcEsc(m.fmt(last))}</text>`;
       else g += `<text x="${tx0+tw+10}" y="${ym+5}" font-size="14" font-weight="800" fill="${C.ink}">${pcEsc(m.fmt(last))}</text>`;
       const pv = pcPrev(r);
@@ -4918,7 +4931,9 @@ function renderCharts(){
   if(!wrap) return;
   const ch = activeTab==='video' ? 'Video' : 'Live';
   const note = document.querySelector('#chartsCard .toolbar .note');
-  if(note) note.innerHTML = `Grafik <b>${ch}</b> per toko — batang = periode terbaru, garis = periode sebelumnya, urut dari nilai tertinggi`;
+  if(note) note.innerHTML = getPeriods(activeTab).multi
+    ? `Grafik <b>${ch}</b> per toko — batang = periode terbaru, garis tren = semua periode, growth vs periode sebelumnya`
+    : `Grafik <b>${ch}</b> per toko — batang = periode terbaru, garis = periode sebelumnya, urut dari nilai tertinggi`;
   const st = document.querySelector('#grafik .sec-title'); if(st) st.textContent = `Grafik performa ${ch} per toko`;
   if(!buildChannelRows(activeTab).length){
     wrap.innerHTML = `<div class="empty-state"><div class="empty-icon">📊</div>Belum ada data ${ch} untuk ditampilkan sebagai grafik.</div>`; return;
